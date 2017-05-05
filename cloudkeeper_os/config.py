@@ -47,7 +47,7 @@ AUTHTOKEN_OPTS = [
     cfg.StrOpt('project_domain_name',
                default='default',
                help="Domain name containing project"),
-    cfg.StrOpt('auth_uri',
+    cfg.StrOpt('auth_url',
                default=None,
                help='Complete public Identity API endpoint.'),
 ]
