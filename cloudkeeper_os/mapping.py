@@ -26,7 +26,9 @@ CONF = cfg.CONF
 
 LOG = log.getLogger(__name__)
 
-class Mapping():
+class Mapping(object):
+    """An object for managing the VO / project mapping
+    """
     def __init__(self):
         self.vo_mapping = {}
         self.project_mapping = {}
@@ -53,3 +55,13 @@ class Mapping():
             return self.project_mapping[project]
         else:
             return None
+
+    def get_vos(self):
+        """Return the list of supported VOs
+        """
+        return self.vo_mapping.keys()
+
+    def get_projects(self):
+        """Return the list of VO-related project
+        """
+        return self.project_mapping.keys()
