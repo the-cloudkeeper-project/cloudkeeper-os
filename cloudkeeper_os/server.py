@@ -30,7 +30,7 @@ from oslo_config import cfg
 from cloudkeeper_os import cloudkeeper_pb2
 from cloudkeeper_os import cloudkeeper_pb2_grpc
 from cloudkeeper_os import config
-from cloudkeeper_os import keystone_client
+from cloudkeeper_os import imagemanager
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
@@ -39,6 +39,9 @@ LOG = log.getLogger(__name__)
 class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
     """Provides methods that implement functionnality of cloudkeeper server.
     """
+    def __init__(self):
+        self.imagemanager = imagemanager.ImageManager()
+
     def PreAction(self, request, context):
         pass
 
@@ -49,46 +52,60 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         """params: Appliance
            returns: google.protobuf.Empty
         """
-        vo = request.vo
-        #add project_from_vo function
-        session = keystone_client.get_session(vo)
-        #glance.create_image(session=session, name=image_name,
-        #                    disk_format=image_format,
-        #                    container_format=container_format,
-        #                    data=fimage, properties=properties_dict
-        #                   )
+        appliance = cloudkeeper_pb2.Appliance(
+            identifier=request.identifier,
+            title=request.title,
+            description=request.description,
+            mpuri=request.mpuri,
+            group=request.group,
+            ram=request.ram,
+            core=request.core,
+            version=request.version,
+            architecture=request.archicture,
+            operating_system=request.operating_system,
+            vo=request.vo,
+            expiration_date=request.expiration_date,
+            image_list_identifier=request.image_list_identifier,
+            image=request.image,
+            attributes=request.attributes
+        )
+        self.imagemanager.add_appliance(appliance)
 
     def UpdateAppliance(self, request, context):
         """params: Appliance
            returns: google.protobuf.Empty
         """
-        pass
+        # Transform Appliance to a usable thing
+        appliance = cloudkeeper_pb2.Appliance(request)
+        self.imagemanager.update_appliance(appliance)
 
     def RemoveAppliance(self, request, context):
         """params: Appliance
            returns: google.protobuf.Empty
         """
-        pass
+        appliance = cloudkeeper_pb2.Appliance(request)
+        self.imagemanager.remove_appliance(appliance)
 
     def RemoveImageList(self, request, context):
         """params: ImageListIdentifier
            returns: google.protobuf.Empty
         """
-        pass
+        self.imagemanager.remove_image_list(request.image_list_identifier)
 
     def ImageLists(self, request, context):
         """params: empty
            returns: ImageListIdentifier
         """
-        image_list = cloudkeeper_pb2.ImageListIdentifier()
-        return image_list
+        for identifier in self.imagemanager.get_image_list_identifiers():
+            yield cloudkeeper_pb2.ImageListIdentifier(image_list_identifier=identifier)
 
     def Appliances(self, request, context):
         """params: ImageListIdentifier
            returns: Appliance
         """
-        appliance = cloudkeeper_pb2.Appliance()
-        return appliance
+        for image in self.imagemanager.get_appliances(request.image_list_identifier):
+            # verify the return value
+            yield image
 
 def serve():
     """Configure and launch the service
