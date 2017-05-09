@@ -31,4 +31,4 @@ def get_session(project_name):
     auth_params = dict(CONF[CFG_GROUP])
     auth_params['project_name'] = project_name
     auth = v3.Password(**auth_params)
-    return session.Session(auth=auth, verify = False)
+    return session.Session(auth=auth, verify=False)
