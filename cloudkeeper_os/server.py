@@ -24,6 +24,7 @@ import time
 
 from concurrent import futures
 import grpc
+from google.protobuf import empty_pb2
 from oslo_log import log
 from oslo_config import cfg
 
@@ -35,12 +36,14 @@ from cloudkeeper_os import imagemanager
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 LOG = log.getLogger(__name__)
+CONF = cfg.CONF
+DOMAIN = "cloudkeeper-os"
 
 class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
     """Provides methods that implement functionnality of cloudkeeper server.
     """
     def __init__(self):
-        self.imagemanager = imagemanager.ImageManager()
+        pass
 
     def PreAction(self, request, context):
         pass
@@ -52,69 +55,62 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         """params: Appliance
            returns: google.protobuf.Empty
         """
-        appliance = cloudkeeper_pb2.Appliance(
-            identifier=request.identifier,
-            title=request.title,
-            description=request.description,
-            mpuri=request.mpuri,
-            group=request.group,
-            ram=request.ram,
-            core=request.core,
-            version=request.version,
-            architecture=request.archicture,
-            operating_system=request.operating_system,
-            vo=request.vo,
-            expiration_date=request.expiration_date,
-            image_list_identifier=request.image_list_identifier,
-            image=request.image,
-            attributes=request.attributes
-        )
-        self.imagemanager.add_appliance(appliance)
+        LOG.info("Adding appliance: %s" % request.identifier)
+        manager = imagemanager.ApplianceManager()
+        manager.add_appliance(request)
+        return empty_pb2.Empty()
 
     def UpdateAppliance(self, request, context):
         """params: Appliance
            returns: google.protobuf.Empty
         """
-        # Transform Appliance to a usable thing
-        appliance = cloudkeeper_pb2.Appliance(request)
-        self.imagemanager.update_appliance(appliance)
+        LOG.info("updating appliance: %s" % request.identifier)
+        manager = imagemanager.ApplianceManager()
+        manager.update_appliance(request)
+        return empty_pb2.Empty()
 
     def RemoveAppliance(self, request, context):
         """params: Appliance
            returns: google.protobuf.Empty
         """
-        appliance = cloudkeeper_pb2.Appliance(request)
-        self.imagemanager.remove_appliance(appliance)
+        LOG.info("Removing appliance: %s" % request.identifier)
+        manager = imagemanager.ApplianceManager()
+        manager.remove_appliance(request)
+        return empty_pb2.Empty()
 
     def RemoveImageList(self, request, context):
         """params: ImageListIdentifier
            returns: google.protobuf.Empty
         """
-        self.imagemanager.remove_image_list(request.image_list_identifier)
+        LOG.info("Removing image list identifier: %s" % request.image_list_identifier)
+        manager = imagemanager.ImageListManager()
+        manager.remove_image_list(request.image_list_identifier)
+        return empty_pb2.Empty()
 
     def ImageLists(self, request, context):
         """params: empty
            returns: ImageListIdentifier
         """
-        for identifier in self.imagemanager.get_image_list_identifiers():
+        manager = imagemanager.ImageListManager()
+        for identifier in manager.get_image_list_identifiers():
             yield cloudkeeper_pb2.ImageListIdentifier(image_list_identifier=identifier)
 
     def Appliances(self, request, context):
         """params: ImageListIdentifier
            returns: Appliance
         """
-        for image in self.imagemanager.get_appliances(request.image_list_identifier):
-            # verify the return value
-            yield image
+        manager = imagemanager.ImageListManager()
+        for appliance in manager.get_appliances(request.image_list_identifier):
+            yield appliance
+
 
 def serve():
     """Configure and launch the service
     """
+    log.register_options(CONF)
+    log.setup(CONF, DOMAIN)
     try:
         config.parse_args(sys.argv)
-        #log.setup(cfg.CONF, 'cloudkeeper-os')
-        #log.set_defaults()
-        #config.set_config_defaults()
     except RuntimeError as rtex:
         LOG.exception(rtex)
         sys.exit(1)
