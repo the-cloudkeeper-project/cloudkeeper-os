@@ -28,7 +28,6 @@ from google.protobuf import empty_pb2
 from oslo_log import log
 from oslo_config import cfg
 
-from cloudkeeper_os import cloudkeeper_pb2
 from cloudkeeper_os import cloudkeeper_pb2_grpc
 from cloudkeeper_os import config
 from cloudkeeper_os import imagemanager
@@ -92,8 +91,8 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
            returns: ImageListIdentifier
         """
         manager = imagemanager.ImageListManager()
-        for identifier in manager.get_image_list_identifiers():
-            yield cloudkeeper_pb2.ImageListIdentifier(image_list_identifier=identifier)
+        for image_list_identifier in manager.get_image_list_identifiers():
+            yield image_list_identifier
 
     def Appliances(self, request, context):
         """params: ImageListIdentifier
