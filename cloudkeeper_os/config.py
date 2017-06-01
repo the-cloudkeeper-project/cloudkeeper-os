@@ -30,6 +30,9 @@ DEFAULT_OPTS = [
                default='/etc/cloudkeeper-os/voms.json',
                help='Directory where the cloud credentials for each VO '
                     'are stored.')
+    cfg.StrOpt('tempdir',
+               default='/tmp',
+               help='Directory where the images are downloaded')
 ]
 
 cfg.CONF.register_opts(DEFAULT_OPTS)
