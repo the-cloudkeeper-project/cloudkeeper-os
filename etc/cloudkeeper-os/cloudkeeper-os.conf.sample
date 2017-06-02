@@ -1,0 +1,35 @@
+[DEFAULT]
+
+#
+# From cloudkeeper_os.config
+#
+
+# The port on which the server will listen. (port value)
+# Minimum value: 0
+# Maximum value: 65535
+#grpc_port = 50051
+
+# Directory where the cloud credentials for each VO are stored. (string value)
+#mapping_file = /etc/cloudkeeper-os/voms.json
+
+
+[keystone_authtoken]
+
+#
+# From cloudkeeper_os.config
+#
+
+# Username (string value)
+#username = cloudkeeper
+
+# User's password (string value)
+#password = <None>
+
+# User's domain name (string value)
+#user_domain_name = default
+
+# Domain name containing project (string value)
+#project_domain_name = default
+
+# Complete public Identity API endpoint. (string value)
+#auth_uri = <None>
