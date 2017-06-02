@@ -29,7 +29,7 @@ DEFAULT_OPTS = [
     cfg.StrOpt('mapping_file',
                default='/etc/cloudkeeper-os/voms.json',
                help='Directory where the cloud credentials for each VO '
-                    'are stored.')
+                    'are stored.'),
     cfg.StrOpt('tempdir',
                default='/tmp',
                help='Directory where the images are downloaded')
