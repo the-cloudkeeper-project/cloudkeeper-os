@@ -24,10 +24,10 @@ import time
 
 from concurrent import futures
 import grpc
-from google.protobuf import empty_pb2
 from oslo_log import log
 from oslo_config import cfg
 
+from cloudkeeper_os import cloudkeeper_pb2
 from cloudkeeper_os import cloudkeeper_pb2_grpc
 from cloudkeeper_os import config
 from cloudkeeper_os import imagemanager
@@ -45,10 +45,10 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         pass
 
     def PreAction(self, request, context):
-        pass
+        return cloudkeeper_pb2.Empty()
 
     def PostAction(self, request, context):
-        pass
+        return cloudkeeper_pb2.Empty()
 
     def AddAppliance(self, request, context):
         """params: Appliance
@@ -57,7 +57,7 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         LOG.info("Adding appliance: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
         manager.add_appliance(request)
-        return empty_pb2.Empty()
+        return cloudkeeper_pb2.Empty()
 
     def UpdateAppliance(self, request, context):
         """params: Appliance
@@ -66,7 +66,7 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         LOG.info("updating appliance: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
         manager.update_appliance(request)
-        return empty_pb2.Empty()
+        return cloudkeeper_pb2.Empty()
 
     def RemoveAppliance(self, request, context):
         """params: Appliance
@@ -75,7 +75,7 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         LOG.info("Removing appliance: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
         manager.remove_appliance(request)
-        return empty_pb2.Empty()
+        return cloudkeeper_pb2.Empty()
 
     def RemoveImageList(self, request, context):
         """params: ImageListIdentifier
@@ -84,7 +84,7 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         LOG.info("Removing image list identifier: %s" % request.image_list_identifier)
         manager = imagemanager.ImageListManager()
         manager.remove_image_list(request.image_list_identifier)
-        return empty_pb2.Empty()
+        return cloudkeeper_pb2.Empty()
 
     def ImageLists(self, request, context):
         """params: empty
