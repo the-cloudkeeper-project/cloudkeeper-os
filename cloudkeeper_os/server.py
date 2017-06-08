@@ -27,8 +27,8 @@ import grpc
 from oslo_log import log
 from oslo_config import cfg
 
-from cloudkeeper_os import cloudkeeper_pb2
 from cloudkeeper_os import cloudkeeper_pb2_grpc
+from cloudkeeper_os import cloudkeeper_pb2
 from cloudkeeper_os import config
 from cloudkeeper_os import imagemanager
 
@@ -41,75 +41,116 @@ DOMAIN = "cloudkeeper-os"
 class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
     """Provides methods that implement functionnality of cloudkeeper server.
     """
-    def __init__(self):
-        pass
-
     def PreAction(self, request, context):
+        metadata = (
+            ('status', 'SUCCESS'),
+        )
+        LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
+        context.set_trailing_metadata(metadata)
         return cloudkeeper_pb2.Empty()
 
     def PostAction(self, request, context):
+        metadata = (
+            ('status', 'SUCCESS'),
+        )
+        LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
+        context.set_trailing_metadata(metadata)
         return cloudkeeper_pb2.Empty()
 
     def AddAppliance(self, request, context):
         """params: Appliance
            returns: google.protobuf.Empty
         """
+        metadata = (
+            ('status', 'SUCCESS'),
+        )
         LOG.info("Adding appliance: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
-        manager.add_appliance(request)
+        if not manager.add_appliance(request):
+            metadata = (
+                ('status', 'ERROR')
+            )
+        LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
+        context.set_trailing_metadata(metadata)
         return cloudkeeper_pb2.Empty()
 
     def UpdateAppliance(self, request, context):
         """params: Appliance
            returns: google.protobuf.Empty
         """
+        metadata = (
+            ('status', 'SUCCESS'),
+        )
         LOG.info("updating appliance: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
         manager.update_appliance(request)
+        LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
+        context.set_trailing_metadata(metadata)
         return cloudkeeper_pb2.Empty()
 
     def RemoveAppliance(self, request, context):
         """params: Appliance
            returns: google.protobuf.Empty
         """
+        metadata = (
+            ('status', 'SUCCESS'),
+        )
         LOG.info("Removing appliance: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
         manager.remove_appliance(request)
+        LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
+        context.set_trailing_metadata(metadata)
         return cloudkeeper_pb2.Empty()
 
     def RemoveImageList(self, request, context):
         """params: ImageListIdentifier
            returns: google.protobuf.Empty
         """
+        metadata = (
+            ('status', 'SUCCESS'),
+        )
         LOG.info("Removing image list identifier: %s" % request.image_list_identifier)
         manager = imagemanager.ImageListManager()
         manager.remove_image_list(request.image_list_identifier)
+        LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
+        context.set_trailing_metadata(metadata)
         return cloudkeeper_pb2.Empty()
 
     def ImageLists(self, request, context):
         """params: empty
            returns: ImageListIdentifier
         """
+        metadata = (
+            ('status', 'SUCCESS'),
+        )
         manager = imagemanager.ImageListManager()
         for image_list_identifier in manager.get_image_list_identifiers():
             yield image_list_identifier
+        LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
+        context.set_trailing_metadata(metadata)
 
     def Appliances(self, request, context):
         """params: ImageListIdentifier
            returns: Appliance
         """
+        metadata = (
+            ('status', 'SUCCESS'),
+        )
         manager = imagemanager.ImageListManager()
         for appliance in manager.get_appliances(request.image_list_identifier):
             yield appliance
+        LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
+        context.set_trailing_metadata(metadata)
 
 
 def serve():
     """Configure and launch the service
     """
     log.register_options(CONF)
-    log.setup(CONF, DOMAIN)
+    log.set_defaults()
     try:
         config.parse_args(sys.argv)
+        log.setup(CONF, DOMAIN)
     except RuntimeError as rtex:
         LOG.exception(rtex)
         sys.exit(1)
