@@ -47,6 +47,7 @@ class ApplianceManager(object):
         if not project_name:
             # TODO Add a project exception
             LOG.error('No such VO: ' + appliance.vo)
+        LOG.debug("Get session for projet: %s" % project_name)
         sess = keystone_client.get_session(project_name=project_name)
         glance = glanceclient.Client(session=sess)
         LOG.info('Adding appliance: ' + appliance.title)
@@ -55,24 +56,31 @@ class ApplianceManager(object):
         if image.mode == 'REMOTE':
             filename = CONF.tempdir + '/' + str(uuid.uuid4())
             kwargs = {}
-            kwargs['uri'] = image['location']
+            kwargs['uri'] = image.location
             kwargs['filename'] = filename
             if image.HasField('username') and image.HasField('password'):
-                kwargs['username'] = image['username']
-                kwargs['password'] = image['password']
+                kwargs['username'] = image.username
+                kwargs['password'] = image.password
             utils.retrieve_image(**kwargs)
         else:
-            filename = image['location']
-        image_data = open(appliance.image, 'r')
+            filename = image.location
+        image_data = open(filename, 'rb')
         properties = {}
+        appliance.ClearField('attributes')
         for (descriptor, value) in appliance.ListFields():
             key = 'CLOUDKEEPER_' + str.upper(descriptor.name)
-            properties[key] = value
-        glance.images.create(session=sess, name=appliance.title,
-                             disk_format="",
-                             container_format="bare",
-                             data=image_data, properties=properties
-                            )
+            properties[key] = str(value)
+        image_format = str.lower(image.Format.Name(image.format))
+        LOG.debug("Create image %s (format: %s, "
+                  "properties %s)" % (appliance.title, image_format,
+                                      properties)
+                 )
+        image = glance.images.create(name=appliance.title,
+                                     disk_format=image_format,
+                                     container_format="bare"
+                                    )
+        glance.images.upload(image['id'], image_data)
+        glance.images.update(image['id'], **properties)
 
     def update_appliance(self, appliance):
         """Update properties of an appliance
@@ -93,7 +101,7 @@ class ApplianceManager(object):
             LOG.info('Updating image: %s' % image_list[0]['id'])
             for (descriptor, value) in appliance.ListFields():
                 key = 'CLOUDKEEPER_' + str.upper(descriptor.name)
-                properties[key] = value
+                properties[key] = str(value)
             glance.images.update(image_list[0]['id'], **properties)
         elif len(image_list) > 1:
             LOG.error("Multiple images found with the same properties "
@@ -161,7 +169,7 @@ class ImageListManager(object):
             for image in image_list:
                 if IMAGE_LIST_ID_TAG in image:
                     if image[IMAGE_LIST_ID_TAG] not in appliances:
-                        appliances[IMAGE_LIST_ID_TAG] = []
+                        appliances[image[IMAGE_LIST_ID_TAG]] = []
                     appliances[image[IMAGE_LIST_ID_TAG]].append(image)
             self.appliances = appliances
 
@@ -175,7 +183,10 @@ class ImageListManager(object):
             for field in cloudkeeper_pb2.Appliance.DESCRIPTOR.fields_by_name:
                 key = 'CLOUDKEEPER_'+str.upper(field)
                 if key in image:
-                    properties[field] = image[key]
+                    if field == 'expiration_date':
+                        properties[field] = long(image[key])
+                    else:
+                        properties[field] = image[key]
             appliance_list.append(
                 cloudkeeper_pb2.Appliance(**properties)
             )
