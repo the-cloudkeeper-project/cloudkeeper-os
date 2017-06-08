@@ -68,7 +68,7 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         manager = imagemanager.ApplianceManager()
         if not manager.add_appliance(request):
             metadata = (
-                ('status', 'ERROR')
+                ('status', 'ERROR'),
             )
         LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
         context.set_trailing_metadata(metadata)
