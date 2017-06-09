@@ -20,6 +20,7 @@
 import uuid
 
 import glanceclient.v2.client as glanceclient
+import json
 from oslo_config import cfg
 from oslo_log import log
 
@@ -30,8 +31,8 @@ from cloudkeeper_os import utils
 
 CONF = cfg.CONF
 LOG = log.getLogger(__name__)
-IMAGE_ID_TAG = 'CLOUDKEEPER_IDENTIFIER'
-IMAGE_LIST_ID_TAG = 'CLOUDKEEPER_IMAGE_LIST_IDENTIFIER'
+IMAGE_ID_TAG = 'APPLIANCE_ID'
+IMAGE_LIST_ID_TAG = 'APPLIANCE_IMAGE_LIST_ID'
 
 
 class ApplianceManager(object):
@@ -66,21 +67,30 @@ class ApplianceManager(object):
             filename = image.location
         image_data = open(filename, 'rb')
         properties = {}
-        appliance.ClearField('attributes')
         for (descriptor, value) in appliance.ListFields():
-            key = 'CLOUDKEEPER_' + str.upper(descriptor.name)
+            if descriptor.name == 'identifier':
+                key = IMAGE_ID_TAG
+            elif descriptor.name == 'image_list_identifier':
+                key = IMAGE_LIST_ID_TAG
+            else:
+                if descriptor.name == 'attributes':
+                    data = dict(value)
+                    value = json.dumps(data)
+                    LOG.debug("attribute value: %s" % value)
+                key = 'APPLIANCE_' + str.upper(descriptor.name)
             properties[key] = str(value)
         image_format = str.lower(image.Format.Name(image.format))
         LOG.debug("Create image %s (format: %s, "
                   "properties %s)" % (appliance.title, image_format,
                                       properties)
                  )
-        image = glance.images.create(name=appliance.title,
-                                     disk_format=image_format,
-                                     container_format="bare"
-                                    )
-        glance.images.upload(image['id'], image_data)
-        glance.images.update(image['id'], **properties)
+        glance_image = glance.images.create(name=appliance.title,
+                                            disk_format=image_format,
+                                            container_format="bare"
+                                           )
+        glance.images.upload(glance_image.id, image_data)
+        glance.images.update(glance_image.id, **properties)
+        return glance_image.id
 
     def update_appliance(self, appliance):
         """Update properties of an appliance
@@ -95,26 +105,37 @@ class ApplianceManager(object):
         if appliance.HasField('image'):
             appliance.ClearField('image')
         image_list = list(img_generator)
-        properties = {}
         # TODO Deal the case where a property has been removed
-        if len(image_list) == 1:
-            LOG.info('Updating image: %s' % image_list[0]['id'])
-            for (descriptor, value) in appliance.ListFields():
-                key = 'CLOUDKEEPER_' + str.upper(descriptor.name)
-                properties[key] = str(value)
-            glance.images.update(image_list[0]['id'], **properties)
-        elif len(image_list) > 1:
+        if len(image_list) > 1:
             LOG.error("Multiple images found with the same properties "
                       "(%s: %s, %s: %s)" % (IMAGE_ID_TAG,
                                             appliance.identifier,
                                             IMAGE_LIST_ID_TAG,
                                             appliance.image_list_identifier))
-        else:
+            return None
+        elif len(image_list) == 0:
             LOG.error("No image found with the following properties "
                       "(%s: %s, %s: %s)" % (IMAGE_ID_TAG,
                                             appliance.identifier,
                                             IMAGE_LIST_ID_TAG,
                                             appliance.image_list_identifier))
+            return None
+        properties = {}
+        LOG.info('Updating image: %s' % image_list[0]['id'])
+        for (descriptor, value) in appliance.ListFields():
+            if descriptor.name == 'identifier':
+                key = IMAGE_ID_TAG
+            elif descriptor.name == 'image_list_identifier':
+                key = IMAGE_LIST_ID_TAG
+            else:
+                if descriptor.name == 'attributes':
+                    data = dict(value)
+                    value = json.dumps(data)
+                key = 'APPLIANCE_' + str.upper(descriptor.name)
+        properties[key] = str(value)
+        LOG.debug("The appliance properties are updated with"
+                  "these values: %s" % (properties))
+        glance.images.update(image_list[0]['id'], **properties)
 
     def remove_appliance(self, appliance):
         """Remove an appliance
@@ -181,12 +202,21 @@ class ImageListManager(object):
         for image in self.appliances[image_list_identifier]:
             properties = {}
             for field in cloudkeeper_pb2.Appliance.DESCRIPTOR.fields_by_name:
-                key = 'CLOUDKEEPER_'+str.upper(field)
+                if field == 'identifier':
+                    key = IMAGE_ID_TAG
+                elif field == 'image_list_identifier':
+                    key = IMAGE_LIST_ID_TAG
+                else:
+                    key = 'APPLIANCE_'+str.upper(field)
                 if key in image:
                     if field == 'expiration_date':
                         properties[field] = long(image[key])
+                    elif field == 'attributes':
+                        properties[field] = json.loads(image[key])
                     else:
                         properties[field] = image[key]
+            LOG.debug(image)
+            LOG.debug('properties: %s' % properties)
             appliance_list.append(
                 cloudkeeper_pb2.Appliance(**properties)
             )
@@ -199,7 +229,7 @@ class ImageListManager(object):
         if image_list_identifier not in self.appliances:
             # raise NotIdentifierFound exception
             LOG.error("No image with the image_list_identifier: %s" % image_list_identifier)
-        vo_name = self.appliances[image_list_identifier][0]['CLOUDKEEPER_VO']
+        vo_name = self.appliances[image_list_identifier][0]['APPLIANCE_VO']
         project_name = self.mapping.get_project_from_vo(vo_name)
         sess = keystone_client.get_session(project_name)
         glance = glanceclient.Client(session=sess)
