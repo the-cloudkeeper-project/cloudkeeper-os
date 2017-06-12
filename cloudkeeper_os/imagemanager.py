@@ -17,10 +17,10 @@
 """Image Manager
 """
 
+import json
 import uuid
 
 import glanceclient.v2.client as glanceclient
-import json
 from oslo_config import cfg
 from oslo_log import log
 
