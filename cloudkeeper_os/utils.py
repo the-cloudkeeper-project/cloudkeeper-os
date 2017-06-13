@@ -22,17 +22,25 @@ import shutil
 import requests
 from requests.auth import HTTPBasicAuth
 
-def retrieve_image(uri, filename, username=None, password=None, capath=None):
+from oslo_log import log
+
+LOG = log.getLogger(__name__)
+
+def retrieve_image(uri, filename, username='', password='', capath=None):
     """Retrieve an image
     """
     # TODO manage SSL case
-    if username and password:
-        auth = HTTPBasicAuth(username, password)
-        response = requests.get(uri, auth=auth, stream=True)
-    else:
-        response = requests.get(uri, stream=True)
+    LOG.info("Download image from %s" % uri)
+    auth = HTTPBasicAuth(username, password)
+    response = requests.get(uri, auth=auth, stream=True)
+    LOG.debug("Response: %s when accessing the image." % str(response.status_code))
     if response.status_code == 200:
         output = open(filename, 'wb')
-        # response.raw.decode_content = True
         shutil.copyfileobj(response.raw, output)
         output.close()
+        LOG.debug("Image data successfully saved to %s" % filename)
+        return True
+    else:
+        # TODO raise an exception
+        LOG.error("Failed to download image data due to HTTP error")
+        return False
