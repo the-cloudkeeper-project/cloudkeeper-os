@@ -31,6 +31,8 @@ from cloudkeeper_os import utils
 
 CONF = cfg.CONF
 LOG = log.getLogger(__name__)
+
+APPLIANCE_INT_VALUES = ['ram', 'core', 'expiration_date']
 IMAGE_ID_TAG = 'APPLIANCE_ID'
 IMAGE_LIST_ID_TAG = 'APPLIANCE_IMAGE_LIST_ID'
 
@@ -52,19 +54,22 @@ class ApplianceManager(object):
         sess = keystone_client.get_session(project_name=project_name)
         glance = glanceclient.Client(session=sess)
         LOG.info('Adding appliance: ' + appliance.title)
-        image = appliance.image
-        appliance.ClearField('image')
-        if image.mode == 'REMOTE':
+        LOG.debug("Image access mode: "
+                  "%s" % appliance.image.Mode.Name(appliance.image.mode))
+        if appliance.image.Mode.Name(appliance.image.mode) == 'REMOTE':
+            LOG.debug("Downloading image from Cloudkeeper")
             filename = CONF.tempdir + '/' + str(uuid.uuid4())
             kwargs = {}
-            kwargs['uri'] = image.location
+            kwargs['uri'] = appliance.image.location
             kwargs['filename'] = filename
-            if image.HasField('username') and image.HasField('password'):
-                kwargs['username'] = image.username
-                kwargs['password'] = image.password
-            utils.retrieve_image(**kwargs)
+            kwargs['username'] = appliance.image.username
+            kwargs['password'] = appliance.image.password
+            if not utils.retrieve_image(**kwargs):
+                return None
         else:
-            filename = image.location
+            filename = appliance.image.location
+        image_format = appliance.image.Format.Name(appliance.image.format)
+        appliance.ClearField('image')
         image_data = open(filename, 'rb')
         properties = {}
         for (descriptor, value) in appliance.ListFields():
@@ -79,13 +84,15 @@ class ApplianceManager(object):
                     LOG.debug("attribute value: %s" % value)
                 key = 'APPLIANCE_' + str.upper(descriptor.name)
             properties[key] = str(value)
-        image_format = str.lower(image.Format.Name(image.format))
+        # Add property for cloud-info-provider compatibility
+        properties['vmcatcher_event_ad_mpuri'] = appliance.mpuri
         LOG.debug("Create image %s (format: %s, "
-                  "properties %s)" % (appliance.title, image_format,
+                  "properties %s)" % (appliance.title,
+                                      str.lower(image_format),
                                       properties)
                  )
         glance_image = glance.images.create(name=appliance.title,
-                                            disk_format=image_format,
+                                            disk_format=str.lower(image_format),
                                             container_format="bare"
                                            )
         glance.images.upload(glance_image.id, image_data)
@@ -132,9 +139,11 @@ class ApplianceManager(object):
                     data = dict(value)
                     value = json.dumps(data)
                 key = 'APPLIANCE_' + str.upper(descriptor.name)
-        properties[key] = str(value)
-        LOG.debug("The appliance properties are updated with"
-                  "these values: %s" % (properties))
+            properties[key] = str(value)
+        # Add property for cloud-info-provider compatibility
+        properties['vmcatcher_event_ad_mpuri'] = appliance.mpuri
+        LOG.debug("Appliance properties updated with new "
+                  "values: %s" % (properties))
         glance.images.update(image_list[0]['id'], **properties)
 
     def remove_appliance(self, appliance):
@@ -183,16 +192,20 @@ class ImageListManager(object):
         else:
             project_list = self.mapping.get_projects()
         for project in project_list:
-            sess = keystone_client.get_session(project)
-            glance = glanceclient.Client(session=sess)
-            img_generator = glance.images.list()
-            image_list = list(img_generator)
-            for image in image_list:
-                if IMAGE_LIST_ID_TAG in image:
-                    if image[IMAGE_LIST_ID_TAG] not in appliances:
-                        appliances[image[IMAGE_LIST_ID_TAG]] = []
-                    appliances[image[IMAGE_LIST_ID_TAG]].append(image)
-            self.appliances = appliances
+            try:
+                sess = keystone_client.get_session(project)
+                glance = glanceclient.Client(session=sess)
+                img_generator = glance.images.list()
+                image_list = list(img_generator)
+                for image in image_list:
+                    if IMAGE_LIST_ID_TAG in image:
+                        if image[IMAGE_LIST_ID_TAG] not in appliances:
+                            appliances[image[IMAGE_LIST_ID_TAG]] = []
+                        appliances[image[IMAGE_LIST_ID_TAG]].append(image)
+            except Exception:
+                LOG.error("Not authorized to manage images from the "
+                          "project: %s" % project)
+        self.appliances = appliances
 
     def get_appliances(self, image_list_identifier):
         """Return all appliances with a given image_list_identifier
@@ -209,7 +222,7 @@ class ImageListManager(object):
                 else:
                     key = 'APPLIANCE_'+str.upper(field)
                 if key in image:
-                    if field == 'expiration_date':
+                    if field in APPLIANCE_INT_VALUES:
                         properties[field] = long(image[key])
                     elif field == 'attributes':
                         properties[field] = json.loads(image[key])
