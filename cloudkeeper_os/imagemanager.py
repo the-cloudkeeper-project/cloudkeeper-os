@@ -23,6 +23,7 @@ import uuid
 import glanceclient.v2.client as glanceclient
 from oslo_config import cfg
 from oslo_log import log
+import webob.exc
 
 from cloudkeeper_os import cloudkeeper_pb2
 from cloudkeeper_os import keystone_client
@@ -44,15 +45,21 @@ class ApplianceManager(object):
         self.mapping = mapping.Mapping()
 
     def add_appliance(self, appliance):
-        """Add an appliance
+        """Add an appliance to glance
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         if not project_name:
-            # TODO Add a project exception
             LOG.error('No such VO: ' + appliance.vo)
-        LOG.debug("Get session for projet: %s" % project_name)
-        sess = keystone_client.get_session(project_name=project_name)
-        glance = glanceclient.Client(session=sess)
+            return None
+        LOG.debug("Get session for project: %s" % project_name)
+        try:
+            sess = keystone_client.get_session(project_name=project_name)
+            glance = glanceclient.Client(session=sess)
+            # TODO add a glance session test
+        except webob.exc.HTTPForbidden as err:
+            LOG.error("Connection to Glance failed.")
+            LOG.exception(err)
+            return None
         LOG.info('Adding appliance: ' + appliance.title)
         LOG.debug("Image access mode: "
                   "%s" % appliance.image.Mode.Name(appliance.image.mode))
@@ -64,13 +71,22 @@ class ApplianceManager(object):
             kwargs['filename'] = filename
             kwargs['username'] = appliance.image.username
             kwargs['password'] = appliance.image.password
-            if not utils.retrieve_image(**kwargs):
+            try:
+                utils.retrieve_image(**kwargs)
+            except Exception as err:
+                LOG.error("Failed to download image from Cloudkeeper.")
+                LOG.exception(err)
                 return None
         else:
             filename = appliance.image.location
         image_format = appliance.image.Format.Name(appliance.image.format)
         appliance.ClearField('image')
-        image_data = open(filename, 'rb')
+        try:
+            image_data = open(filename, 'rb')
+        except IOError as err:
+            LOG.error("Can not open image file: %s" % filename)
+            LOG.exception(err)
+            return None
         properties = {}
         for (descriptor, value) in appliance.ListFields():
             if descriptor.name == 'identifier':
@@ -100,7 +116,7 @@ class ApplianceManager(object):
         return glance_image.id
 
     def update_appliance(self, appliance):
-        """Update properties of an appliance
+        """Update an appliance stored in glance
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         sess = keystone_client.get_session(project_name=project_name)
@@ -145,9 +161,10 @@ class ApplianceManager(object):
         LOG.debug("Appliance properties updated with new "
                   "values: %s" % (properties))
         glance.images.update(image_list[0]['id'], **properties)
+        return image_list[0]['id']
 
     def remove_appliance(self, appliance):
-        """Remove an appliance
+        """Remove an appliance in glance
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         sess = keystone_client.get_session(project_name=project_name)
@@ -157,21 +174,24 @@ class ApplianceManager(object):
         kwargs = {'filters': filters}
         img_generator = glance.images.list(**kwargs)
         image_list = list(img_generator)
-        if len(image_list) == 1:
-            LOG.info('Deleting image: %s' % image_list[0]['id'])
-            glance.images.delete(image_list[0]['id'])
-        elif len(image_list) > 1:
+        if len(image_list) > 1:
             LOG.error("Multiple images found with the same properties "
                       "(%s: %s, %s: %s)" % (IMAGE_ID_TAG,
                                             appliance.identifier,
                                             IMAGE_LIST_ID_TAG,
                                             appliance.image_list_identifier))
-        else:
+            return None
+        elif len(image_list) == 0:
             LOG.error("No image found with the following properties "
                       "(%s: %s, %s: %s)" % (IMAGE_ID_TAG,
                                             appliance.identifier,
                                             IMAGE_LIST_ID_TAG,
                                             appliance.image_list_identifier))
+            return None
+        else:
+            LOG.info('Deleting image: %s' % image_list[0]['id'])
+            glance.images.delete(image_list[0]['id'])
+            return image_list[0]['id']
 
 
 class ImageListManager(object):
@@ -241,14 +261,20 @@ class ImageListManager(object):
         self.update_image_list_identifiers()
         if image_list_identifier not in self.appliances:
             # raise NotIdentifierFound exception
-            LOG.error("No image with the image_list_identifier: %s" % image_list_identifier)
+            LOG.error("No image with the image_list_identifier:"
+                      "%s" % image_list_identifier)
+            return None
         vo_name = self.appliances[image_list_identifier][0]['APPLIANCE_VO']
         project_name = self.mapping.get_project_from_vo(vo_name)
         sess = keystone_client.get_session(project_name)
         glance = glanceclient.Client(session=sess)
+        LOG.debug("Delete all images with the Image List Identifier: "
+                  "%s" % image_list_identifier)
         for image in self.appliances[image_list_identifier]:
+            LOG.info("Deleting image %s" % image['id'])
             glance.images.delete(image['id'])
         self.appliances.pop(image_list_identifier)
+        return image_list_identifier
 
     def get_image_list_identifiers(self):
         """Return a list of identifiers
@@ -256,6 +282,7 @@ class ImageListManager(object):
         self.update_image_list_identifiers()
         image_list_identifiers = []
         for identifier in self.appliances:
+            LOG.debug("Append new image list identifier: %s" % identifier)
             image_list_identifiers.append(
                 cloudkeeper_pb2.ImageListIdentifier(
                     image_list_identifier=identifier
