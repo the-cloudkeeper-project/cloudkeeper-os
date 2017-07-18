@@ -17,19 +17,33 @@
 """A set of utils for Cloudkeeper-OS
 """
 
+import json
 import shutil
+import uuid
 
 import requests
 from requests.auth import HTTPBasicAuth
 
+from oslo_config import cfg
 from oslo_log import log
 
-LOG = log.getLogger(__name__)
+from cloudkeeper_os import constants
 
-def retrieve_image(uri, filename, username='', password='', capath=None):
-    """Retrieve an image
+CONF = cfg.CONF
+LOG = log.getLogger(__name__)
+IMAGE_ID_TAG = constants.IMAGE_ID_TAG
+IMAGE_LIST_ID_TAG = constants.IMAGE_LIST_ID_TAG
+
+
+def retrieve_image(appliance):
+    """Retrieve an image from Cloudkeeper NGINX
     """
     # TODO manage SSL case
+    filename = CONF.tempdir + '/' + str(uuid.uuid4())
+    uri = appliance.image.location
+    username = appliance.image.username
+    password = appliance.image.password
+
     LOG.info("Download image from %s" % uri)
     auth = HTTPBasicAuth(username, password)
     response = requests.get(uri, auth=auth, stream=True)
@@ -39,8 +53,52 @@ def retrieve_image(uri, filename, username='', password='', capath=None):
         shutil.copyfileobj(response.raw, output)
         output.close()
         LOG.debug("Image data successfully saved to %s" % filename)
-        return True
     else:
-        # TODO raise an exception
         LOG.error("Failed to download image data due to HTTP error")
-        return False
+        return None
+    return filename
+
+
+def find_image(glance_client, identifier, image_list_identifier):
+    """Search for a glance image given a appliance and image list identifiers
+    """
+    filters = {IMAGE_ID_TAG: identifier,
+               IMAGE_LIST_ID_TAG: image_list_identifier}
+    kwargs = {'filters': filters}
+    img_generator = glance_client.images.list(**kwargs)
+    image_list = list(img_generator)
+
+    if len(image_list) > 1:
+        LOG.error("Multiple images found with the same properties "
+                  "(%s: %s, %s: %s)" % (IMAGE_ID_TAG, identifier,
+                                        IMAGE_LIST_ID_TAG,
+                                        image_list_identifier))
+        return None
+    elif len(image_list) == 0:
+        LOG.error("No image found with the following properties "
+                  "(%s: %s, %s: %s)" % (IMAGE_ID_TAG, identifier,
+                                        IMAGE_LIST_ID_TAG,
+                                        image_list_identifier))
+        return None
+    else:
+        return image_list[0]
+
+def extract_appliance_properties(appliance):
+    """Extract properties from an appliance
+    """
+    properties = {}
+    for (descriptor, value) in appliance.ListFields():
+        if descriptor.name == 'identifier':
+            key = IMAGE_ID_TAG
+        elif descriptor.name == 'image_list_identifier':
+            key = IMAGE_LIST_ID_TAG
+        else:
+            if descriptor.name == 'attributes':
+                data = dict(value)
+                value = json.dumps(data)
+                LOG.debug("attribute value: %s" % value)
+            key = 'APPLIANCE_' + str.upper(descriptor.name)
+        properties[key] = str(value)
+    # Add property for cloud-info-provider compatibility
+    properties['vmcatcher_event_ad_mpuri'] = appliance.mpuri
+    return properties

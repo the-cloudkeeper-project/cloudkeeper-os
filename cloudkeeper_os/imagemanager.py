@@ -18,24 +18,21 @@
 """
 
 import json
-import uuid
 
-import glanceclient.v2.client as glanceclient
 from oslo_config import cfg
 from oslo_log import log
-import webob.exc
 
 from cloudkeeper_os import cloudkeeper_pb2
-from cloudkeeper_os import keystone_client
+from cloudkeeper_os import constants
+from cloudkeeper_os import openstack_client
 from cloudkeeper_os import mapping
 from cloudkeeper_os import utils
 
 CONF = cfg.CONF
 LOG = log.getLogger(__name__)
-
-APPLIANCE_INT_VALUES = ['ram', 'core', 'expiration_date']
-IMAGE_ID_TAG = 'APPLIANCE_ID'
-IMAGE_LIST_ID_TAG = 'APPLIANCE_IMAGE_LIST_ID'
+IMAGE_ID_TAG = constants.IMAGE_ID_TAG
+IMAGE_LIST_ID_TAG = constants.IMAGE_LIST_ID_TAG
+APPLIANCE_INT_VALUES = constants.APPLIANCE_INT_VALUES
 
 
 class ApplianceManager(object):
@@ -44,69 +41,48 @@ class ApplianceManager(object):
     def __init__(self):
         self.mapping = mapping.Mapping()
 
+
     def add_appliance(self, appliance):
         """Add an appliance to glance
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         if not project_name:
-            LOG.error('No such VO: ' + appliance.vo)
+            LOG.debug("Cannot get project name from vo %s" % appliance.vo)
             return None
-        LOG.debug("Get session for project: %s" % project_name)
-        try:
-            sess = keystone_client.get_session(project_name=project_name)
-            glance = glanceclient.Client(session=sess)
-            # TODO add a glance session test
-        except webob.exc.HTTPForbidden as err:
-            LOG.error("Connection to Glance failed.")
-            LOG.exception(err)
+
+        glance = openstack_client.get_glance_client(project_name)
+        if not glance:
+            LOG.error("Cannot get glance client for project %s" % project_name)
             return None
+
         LOG.info('Adding appliance: ' + appliance.title)
+
         LOG.debug("Image access mode: "
                   "%s" % appliance.image.Mode.Name(appliance.image.mode))
         if appliance.image.Mode.Name(appliance.image.mode) == 'REMOTE':
-            LOG.debug("Downloading image from Cloudkeeper")
-            filename = CONF.tempdir + '/' + str(uuid.uuid4())
-            kwargs = {}
-            kwargs['uri'] = appliance.image.location
-            kwargs['filename'] = filename
-            kwargs['username'] = appliance.image.username
-            kwargs['password'] = appliance.image.password
-            try:
-                utils.retrieve_image(**kwargs)
-            except Exception as err:
-                LOG.error("Failed to download image from Cloudkeeper.")
-                LOG.exception(err)
-                return None
+            filename = utils.retrieve_image(appliance)
         else:
             filename = appliance.image.location
+        if not filename:
+            LOG.error("Image filename is not set.")
+            return None
         image_format = appliance.image.Format.Name(appliance.image.format)
-        appliance.ClearField('image')
         try:
             image_data = open(filename, 'rb')
         except IOError as err:
             LOG.error("Can not open image file: %s" % filename)
             LOG.exception(err)
             return None
-        properties = {}
-        for (descriptor, value) in appliance.ListFields():
-            if descriptor.name == 'identifier':
-                key = IMAGE_ID_TAG
-            elif descriptor.name == 'image_list_identifier':
-                key = IMAGE_LIST_ID_TAG
-            else:
-                if descriptor.name == 'attributes':
-                    data = dict(value)
-                    value = json.dumps(data)
-                    LOG.debug("attribute value: %s" % value)
-                key = 'APPLIANCE_' + str.upper(descriptor.name)
-            properties[key] = str(value)
-        # Add property for cloud-info-provider compatibility
-        properties['vmcatcher_event_ad_mpuri'] = appliance.mpuri
+        appliance.ClearField('image')
+
+        properties = utils.extract_appliance_properties(appliance)
+
         LOG.debug("Create image %s (format: %s, "
                   "properties %s)" % (appliance.title,
                                       str.lower(image_format),
                                       properties)
                  )
+
         glance_image = glance.images.create(name=appliance.title,
                                             disk_format=str.lower(image_format),
                                             container_format="bare"
@@ -119,79 +95,71 @@ class ApplianceManager(object):
         """Update an appliance stored in glance
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
-        sess = keystone_client.get_session(project_name=project_name)
-        glance = glanceclient.Client(session=sess)
-        filters = {IMAGE_ID_TAG: appliance.identifier,
-                   IMAGE_LIST_ID_TAG: appliance.image_list_identifier}
-        kwargs = {'filters': filters}
-        img_generator = glance.images.list(**kwargs)
-        if appliance.HasField('image'):
-            appliance.ClearField('image')
-        image_list = list(img_generator)
-        # TODO Deal the case where a property has been removed
-        if len(image_list) > 1:
-            LOG.error("Multiple images found with the same properties "
-                      "(%s: %s, %s: %s)" % (IMAGE_ID_TAG,
-                                            appliance.identifier,
-                                            IMAGE_LIST_ID_TAG,
-                                            appliance.image_list_identifier))
+        if not project_name:
+            LOG.debug("Cannot get project name from vo %s" % appliance.vo)
             return None
-        elif len(image_list) == 0:
-            LOG.error("No image found with the following properties "
-                      "(%s: %s, %s: %s)" % (IMAGE_ID_TAG,
-                                            appliance.identifier,
-                                            IMAGE_LIST_ID_TAG,
-                                            appliance.image_list_identifier))
+
+        glance = openstack_client.get_glance_client(project_name)
+        if not glance:
+            LOG.error("Cannot get glance client for project %s" % project_name)
             return None
-        properties = {}
-        LOG.info('Updating image: %s' % image_list[0]['id'])
-        for (descriptor, value) in appliance.ListFields():
-            if descriptor.name == 'identifier':
-                key = IMAGE_ID_TAG
-            elif descriptor.name == 'image_list_identifier':
-                key = IMAGE_LIST_ID_TAG
-            else:
-                if descriptor.name == 'attributes':
-                    data = dict(value)
-                    value = json.dumps(data)
-                key = 'APPLIANCE_' + str.upper(descriptor.name)
-            properties[key] = str(value)
-        # Add property for cloud-info-provider compatibility
-        properties['vmcatcher_event_ad_mpuri'] = appliance.mpuri
+
+        glance_image = utils.find_image(glance, appliance.identifier,
+                                        appliance.image_list_identifier)
+        if not glance_image:
+            LOG.info('Cannot delete image: image not found')
+            return None
+
+        LOG.debug("Image access mode: "
+                  "%s" % appliance.image.Mode.Name(appliance.image.mode))
+        if appliance.image.Mode.Name(appliance.image.mode) == 'REMOTE':
+            filename = utils.retrieve_image(appliance)
+        else:
+            filename = appliance.image.location
+        if not filename:
+            LOG.error("Image filename is not set.")
+            return None
+        image_format = appliance.image.Format.Name(appliance.image.format)
+        try:
+            image_data = open(filename, 'rb')
+        except IOError as err:
+            LOG.error("Can not open image file: %s" % filename)
+            LOG.exception(err)
+            return None
+        appliance.ClearField('image')
+
+        properties = utils.extract_appliance_properties(appliance)
+        properties['disk_format'] = str.lower(image_format)
+
+        LOG.info('Updating image: %s' % glance_image.id)
         LOG.debug("Appliance properties updated with new "
                   "values: %s" % (properties))
-        glance.images.update(image_list[0]['id'], **properties)
-        return image_list[0]['id']
+        glance.images.upload(glance_image.id, image_data)
+        glance.images.update(glance_image.id, **properties)
+        return glance_image.id
+
 
     def remove_appliance(self, appliance):
         """Remove an appliance in glance
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
-        sess = keystone_client.get_session(project_name=project_name)
-        glance = glanceclient.Client(session=sess)
-        filters = {IMAGE_ID_TAG: appliance.identifier,
-                   IMAGE_LIST_ID_TAG: appliance.image_list_identifier}
-        kwargs = {'filters': filters}
-        img_generator = glance.images.list(**kwargs)
-        image_list = list(img_generator)
-        if len(image_list) > 1:
-            LOG.error("Multiple images found with the same properties "
-                      "(%s: %s, %s: %s)" % (IMAGE_ID_TAG,
-                                            appliance.identifier,
-                                            IMAGE_LIST_ID_TAG,
-                                            appliance.image_list_identifier))
+        if not project_name:
+            LOG.debug("Cannot get project name from vo %s" % appliance.vo)
             return None
-        elif len(image_list) == 0:
-            LOG.error("No image found with the following properties "
-                      "(%s: %s, %s: %s)" % (IMAGE_ID_TAG,
-                                            appliance.identifier,
-                                            IMAGE_LIST_ID_TAG,
-                                            appliance.image_list_identifier))
+
+        glance = openstack_client.get_glance_client(project_name)
+        if not glance:
+            LOG.error("Cannot get glance client for project %s" % project_name)
             return None
-        else:
-            LOG.info('Deleting image: %s' % image_list[0]['id'])
-            glance.images.delete(image_list[0]['id'])
-            return image_list[0]['id']
+
+        glance_image = utils.find_image(glance, appliance.identifier,
+                                        appliance.image_list_identifier)
+        if not glance_image:
+            LOG.info('Cannot delete image: image not found')
+            return None
+
+        LOG.info('Deleting image: %s' % glance_image.id)
+        return glance_image.id
 
 
 class ImageListManager(object):
@@ -203,28 +171,31 @@ class ImageListManager(object):
         self.appliances = {}
         self.mapping = mapping.Mapping()
 
-    def update_image_list_identifiers(self, project_name=None):
+    def update_image_list_identifiers(self):
         """Update the identifier list
         """
         appliances = {}
-        if project_name:
-            project_list = [project_name]
-        else:
-            project_list = self.mapping.get_projects()
-        for project in project_list:
+
+        for project_name in self.mapping.get_projects():
+            glance = openstack_client.get_glance_client(project_name)
+            if not glance:
+                LOG.error("Not authorized to manage images from the "
+                          "project: %s" % project_name)
+                continue
             try:
-                sess = keystone_client.get_session(project)
-                glance = glanceclient.Client(session=sess)
                 img_generator = glance.images.list()
                 image_list = list(img_generator)
-                for image in image_list:
-                    if IMAGE_LIST_ID_TAG in image:
-                        if image[IMAGE_LIST_ID_TAG] not in appliances:
-                            appliances[image[IMAGE_LIST_ID_TAG]] = []
-                        appliances[image[IMAGE_LIST_ID_TAG]].append(image)
             except Exception:
                 LOG.error("Not authorized to manage images from the "
-                          "project: %s" % project)
+                          "project: %s" % project_name)
+                continue
+
+            for image in image_list:
+                if IMAGE_LIST_ID_TAG in image:
+                    if image[IMAGE_LIST_ID_TAG] not in appliances:
+                        appliances[image[IMAGE_LIST_ID_TAG]] = []
+                    appliances[image[IMAGE_LIST_ID_TAG]].append(image)
+
         self.appliances = appliances
 
     def get_appliances(self, image_list_identifier):
@@ -266,8 +237,15 @@ class ImageListManager(object):
             return None
         vo_name = self.appliances[image_list_identifier][0]['APPLIANCE_VO']
         project_name = self.mapping.get_project_from_vo(vo_name)
-        sess = keystone_client.get_session(project_name)
-        glance = glanceclient.Client(session=sess)
+        if not project_name:
+            LOG.debug("Cannot get project name from vo %s" % vo_name)
+            return None
+
+        glance = openstack_client.get_glance_client(project_name)
+        if not glance:
+            LOG.error("Cannot get glance client for project %s" % project_name)
+            return None
+
         LOG.debug("Delete all images with the Image List Identifier: "
                   "%s" % image_list_identifier)
         for image in self.appliances[image_list_identifier]:
