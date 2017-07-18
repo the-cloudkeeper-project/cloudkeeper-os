@@ -83,7 +83,10 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         )
         LOG.info("updating appliance: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
-        manager.update_appliance(request)
+        if not manager.update_appliance(request):
+            metadata = (
+                ('status', 'ERROR'),
+            )
         LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
         context.set_trailing_metadata(metadata)
         return cloudkeeper_pb2.Empty()
@@ -97,7 +100,10 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         )
         LOG.info("Removing appliance: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
-        manager.remove_appliance(request)
+        if not manager.remove_appliance(request):
+            metadata = (
+                ('status', 'ERROR'),
+            )
         LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])
         context.set_trailing_metadata(metadata)
         return cloudkeeper_pb2.Empty()

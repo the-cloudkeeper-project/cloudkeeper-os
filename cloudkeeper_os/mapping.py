@@ -46,6 +46,7 @@ class Mapping(object):
         if vo_name in self.vo_mapping:
             return self.vo_mapping[vo_name]
         else:
+            LOG.error("No such VO '%s' in the mapping file." % (vo_name))
             return None
 
     def get_vo_from_project(self, project):
@@ -54,6 +55,7 @@ class Mapping(object):
         if project in self.project_mapping:
             return self.project_mapping[project]
         else:
+            LOG.error("No such project '%s' in the mapping file." % (project))
             return None
 
     def get_vos(self):
