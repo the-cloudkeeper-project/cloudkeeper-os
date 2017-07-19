@@ -18,6 +18,7 @@
 """
 
 import json
+import os
 
 from oslo_config import cfg
 from oslo_log import log
@@ -60,9 +61,11 @@ class ApplianceManager(object):
         LOG.debug("Image access mode: "
                   "%s" % appliance.image.Mode.Name(appliance.image.mode))
         if appliance.image.Mode.Name(appliance.image.mode) == 'REMOTE':
+            remote_image = True
             filename = utils.retrieve_image(appliance)
         else:
             filename = appliance.image.location
+            remote_image = False
         if not filename:
             LOG.error("Image filename is not set.")
             return None
@@ -89,6 +92,13 @@ class ApplianceManager(object):
                                            )
         glance.images.upload(glance_image.id, image_data)
         glance.images.update(glance_image.id, **properties)
+
+        image_data.close()
+
+        if remote_image:
+            LOG.debug("Delete retrieved image: %s" % (filename))
+            os.unlink(filename)
+
         return glance_image.id
 
     def update_appliance(self, appliance):
@@ -113,8 +123,10 @@ class ApplianceManager(object):
         LOG.debug("Image access mode: "
                   "%s" % appliance.image.Mode.Name(appliance.image.mode))
         if appliance.image.Mode.Name(appliance.image.mode) == 'REMOTE':
+            remote_image = True
             filename = utils.retrieve_image(appliance)
         else:
+            remote_image = False
             filename = appliance.image.location
         if not filename:
             LOG.error("Image filename is not set.")
@@ -136,6 +148,13 @@ class ApplianceManager(object):
                   "values: %s" % (properties))
         glance.images.upload(glance_image.id, image_data)
         glance.images.update(glance_image.id, **properties)
+
+        image_data.close()
+
+        if remote_image:
+            LOG.debug("Delete retrieved image: %s" % (filename))
+            os.unlink(filename)
+
         return glance_image.id
 
 
