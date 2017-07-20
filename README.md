@@ -55,6 +55,6 @@ The ```cloudkeeper-os.conf``` configuration file has several sections and has a 
 * password
 * auth_url
 
-In addition, you have to edit the ```voms.json``` JSON file to map correctly the VO and the OpenStack project's name. Note that you can use the same JSON file as for keystone-voms, by setting the ```mapping_file``` parameter with the right path in the ```cloudkeeper-os.conf``` file.
+In addition, you have to edit the ```voms.json``` JSON file to map correctly the VO and the OpenStack project's name. Note that you can use the same JSON file as for the ```keystone-voms``` component, by setting the ```mapping_file``` parameter with the right path in the ```cloudkeeper-os.conf``` file.
 
 To take into account the modifications, do not forget to restart the cloudkeeper-os service.
