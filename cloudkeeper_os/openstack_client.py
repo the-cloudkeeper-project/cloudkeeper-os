@@ -17,11 +17,15 @@
 """Keystone helper
 """
 
+import glanceclient.v2.client as glanceclient
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
 from oslo_config import cfg
+from oslo_log import log
+import webob.exc
 
 CONF = cfg.CONF
+LOG = log.getLogger(__name__)
 
 CFG_GROUP = "keystone_authtoken"
 
@@ -32,3 +36,16 @@ def get_session(project_name):
     auth_params['project_name'] = project_name
     auth = v3.Password(**auth_params)
     return session.Session(auth=auth, verify=False)
+
+def get_glance_client(project_name):
+    """Get a glance client
+    """
+    LOG.debug("Get glance client for project: %s" % project_name)
+    try:
+        sess = get_session(project_name=project_name)
+        glance_client = glanceclient.Client(session=sess)
+    except webob.exc.HTTPForbidden as err:
+        LOG.error("Connection to Glance failed.")
+        LOG.exception(err)
+        return None
+    return glance_client
