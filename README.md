@@ -57,4 +57,6 @@ The ```cloudkeeper-os.conf``` configuration file has several sections and has a 
 
 In addition, you have to edit the ```voms.json``` JSON file to map correctly the VO and the OpenStack project's name. Note that you can use the same JSON file as for the ```keystone-voms``` component, by setting the ```mapping_file``` parameter with the right path in the ```cloudkeeper-os.conf``` file.
 
+Note that the user defined by the ```username``` parameter in the ```cloudkeeper-os.conf``` file should have the right to manage the images for all the project defined in the ```voms.json``` file.
+
 To take into account the modifications, do not forget to restart the cloudkeeper-os service.
