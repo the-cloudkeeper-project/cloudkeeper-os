@@ -16,6 +16,12 @@ RUN apt-get update && \
     pip install grpcio pbr python-glanceclient keystoneauth1 oslo-config oslo-log webob && \
     pip install git+https://github.com/the-cloudkeeper-project/cloudkeeper-os.git
 
-EXPOSE 50051
+# env
+RUN useradd --system --shell /bin/false --home ${spoolDir} --create-home ${name} && \
+    usermod -L ${name}
+
+EXPOSE 50051 50505
+
+USER ${name}
 
 ENTRYPOINT ["cloudkeeper-os"]
