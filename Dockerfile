@@ -17,7 +17,7 @@ RUN apt-get update && \
     pip install git+https://github.com/the-cloudkeeper-project/cloudkeeper-os.git
 
 # env
-RUN useradd --system --shell /bin/false --home ${spoolDir} --create-home ${name} && \
+RUN useradd --system --shell /bin/false --create-home ${name} && \
     usermod -L ${name}
 
 EXPOSE 50051 50505
