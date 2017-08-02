@@ -40,7 +40,7 @@ def get_session(project_name):
 def get_glance_client(project_name):
     """Get a glance client
     """
-    LOG.debug("Get glance client for project: %s" % project_name)
+    LOG.debug("Get a glance client for the project: '%s'" % project_name)
     try:
         sess = get_session(project_name=project_name)
         glance_client = glanceclient.Client(session=sess)
