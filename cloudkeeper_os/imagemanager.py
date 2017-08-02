@@ -48,12 +48,14 @@ class ApplianceManager(object):
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         if not project_name:
-            LOG.debug("Cannot get project name from vo %s" % appliance.vo)
+            LOG.error("Cannot get a project name mapped to the "
+                      "vo '%s'" % appliance.vo)
             return None
 
         glance = openstack_client.get_glance_client(project_name)
         if not glance:
-            LOG.error("Cannot get glance client for project %s" % project_name)
+            LOG.error("Cannot get a glance client for the "
+                      "project '%s'" % project_name)
             return None
 
         LOG.info('Adding appliance: ' + appliance.title)
@@ -63,24 +65,29 @@ class ApplianceManager(object):
         if appliance.image.Mode.Name(appliance.image.mode) == 'REMOTE':
             remote_image = True
             filename = utils.retrieve_image(appliance)
+            if not filename:
+                LOG.error("The appliance '%s' could not be retrieved from "
+                          "Cloudkeeper" % appliance.identifier)
+                return None
         else:
             filename = appliance.image.location
             remote_image = False
-        if not filename:
-            LOG.error("Image filename is not set.")
-            return None
+            if not filename:
+                LOG.error("The image filename has not set been set "
+                          "in the appliance '%s'." % appliance.identifier)
+                return None
         image_format = appliance.image.Format.Name(appliance.image.format)
         try:
             image_data = open(filename, 'rb')
         except IOError as err:
-            LOG.error("Can not open image file: %s" % filename)
+            LOG.error("Cannot open image file: '%s'" % filename)
             LOG.exception(err)
             return None
         appliance.ClearField('image')
 
         properties = utils.extract_appliance_properties(appliance)
 
-        LOG.debug("Create image %s (format: %s, "
+        LOG.debug("Creating image '%s' (format: '%s', "
                   "properties %s)" % (appliance.title,
                                       str.lower(image_format),
                                       properties)
@@ -96,7 +103,7 @@ class ApplianceManager(object):
         image_data.close()
 
         if remote_image:
-            LOG.debug("Delete retrieved image: %s" % (filename))
+            LOG.debug("Deleting retrieved image: '%s'" % (filename))
             os.unlink(filename)
 
         return glance_image.id
@@ -104,58 +111,14 @@ class ApplianceManager(object):
     def update_appliance(self, appliance):
         """Update an appliance stored in glance
         """
-        project_name = self.mapping.get_project_from_vo(appliance.vo)
-        if not project_name:
-            LOG.debug("Cannot get project name from vo %s" % appliance.vo)
-            return None
-
-        glance = openstack_client.get_glance_client(project_name)
-        if not glance:
-            LOG.error("Cannot get glance client for project %s" % project_name)
-            return None
-
-        glance_image = utils.find_image(glance, appliance.identifier,
-                                        appliance.image_list_identifier)
-        if not glance_image:
-            LOG.info('Cannot delete image: image not found')
-            return None
-
-        LOG.debug("Image access mode: "
-                  "%s" % appliance.image.Mode.Name(appliance.image.mode))
-        if appliance.image.Mode.Name(appliance.image.mode) == 'REMOTE':
-            remote_image = True
-            filename = utils.retrieve_image(appliance)
-        else:
-            remote_image = False
-            filename = appliance.image.location
-        if not filename:
-            LOG.error("Image filename is not set.")
-            return None
-        image_format = appliance.image.Format.Name(appliance.image.format)
-        try:
-            image_data = open(filename, 'rb')
-        except IOError as err:
-            LOG.error("Can not open image file: %s" % filename)
-            LOG.exception(err)
-            return None
-        appliance.ClearField('image')
-
-        properties = utils.extract_appliance_properties(appliance)
-        properties['disk_format'] = str.lower(image_format)
-
-        LOG.info('Updating image: %s' % glance_image.id)
-        LOG.debug("Appliance properties updated with new "
-                  "values: %s" % (properties))
-        glance.images.upload(glance_image.id, image_data)
-        glance.images.update(glance_image.id, **properties)
-
-        image_data.close()
-
-        if remote_image:
-            LOG.debug("Delete retrieved image: %s" % (filename))
-            os.unlink(filename)
-
-        return glance_image.id
+        LOG.info("Updating image: '%s'" % appliance.identifier)
+        LOG.debug("Deleting old release of the appliance")
+        old_image_id = self.remove_appliance(appliance)
+        LOG.debug("The glance image '%s' has been deleted" % old_image_id)
+        LOG.debug("Creating new release of the appliance")
+        image_id = self.add_appliance(appliance)
+        LOG.debug("The glance image '%s' has been created" % image_id)
+        return image_id
 
 
     def remove_appliance(self, appliance):
@@ -163,21 +126,24 @@ class ApplianceManager(object):
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         if not project_name:
-            LOG.debug("Cannot get project name from vo %s" % appliance.vo)
+            LOG.debug("Cannot get a project name mapped to the "
+                      "VO '%s'" % appliance.vo)
             return None
 
         glance = openstack_client.get_glance_client(project_name)
         if not glance:
-            LOG.error("Cannot get glance client for project %s" % project_name)
+            LOG.error("Cannot get a glance client for the "
+                      "project '%s'" % project_name)
             return None
 
         glance_image = utils.find_image(glance, appliance.identifier,
                                         appliance.image_list_identifier)
         if not glance_image:
-            LOG.info('Cannot delete image: image not found')
+            LOG.info("Cannot delete image: image not found")
             return None
 
-        LOG.info('Deleting image: %s' % glance_image.id)
+        LOG.info("Deleting image: '%s'" % glance_image.id)
+        glance.images.delete(glance_image.id)
         return glance_image.id
 
 
@@ -204,9 +170,10 @@ class ImageListManager(object):
             try:
                 img_generator = glance.images.list()
                 image_list = list(img_generator)
-            except Exception:
-                LOG.error("Not authorized to manage images from the "
-                          "project: %s" % project_name)
+            except Exception as err:
+                LOG.error("Not authorized to retrieve the image list from "
+                          "the project: %s" % project_name)
+                LOG.exception(err)
                 continue
 
             for image in image_list:
@@ -238,8 +205,9 @@ class ImageListManager(object):
                         properties[field] = json.loads(image[key])
                     else:
                         properties[field] = image[key]
-            LOG.debug(image)
-            LOG.debug('properties: %s' % properties)
+            LOG.debug("The image '%s' is added to the appliance list having "
+                      "the following "
+                      "identifier %s" % (image.id, image_list_identifier))
             appliance_list.append(
                 cloudkeeper_pb2.Appliance(**properties)
             )
@@ -257,18 +225,20 @@ class ImageListManager(object):
         vo_name = self.appliances[image_list_identifier][0]['APPLIANCE_VO']
         project_name = self.mapping.get_project_from_vo(vo_name)
         if not project_name:
-            LOG.debug("Cannot get project name from vo %s" % vo_name)
+            LOG.debug("Cannot get the project name mapped the "
+                      "VO '%s'" % vo_name)
             return None
 
         glance = openstack_client.get_glance_client(project_name)
         if not glance:
-            LOG.error("Cannot get glance client for project %s" % project_name)
+            LOG.error("Cannot get a glance client for the "
+                      "project '%s'" % project_name)
             return None
 
-        LOG.debug("Delete all images with the Image List Identifier: "
-                  "%s" % image_list_identifier)
+        LOG.debug("Deleting all images with the Image List Identifier: "
+                  "'%s'" % image_list_identifier)
         for image in self.appliances[image_list_identifier]:
-            LOG.info("Deleting image %s" % image['id'])
+            LOG.info("Deleting image '%s'" % image['id'])
             glance.images.delete(image['id'])
         self.appliances.pop(image_list_identifier)
         return image_list_identifier
@@ -279,7 +249,7 @@ class ImageListManager(object):
         self.update_image_list_identifiers()
         image_list_identifiers = []
         for identifier in self.appliances:
-            LOG.debug("Append new image list identifier: %s" % identifier)
+            LOG.debug("Appending new image list identifier: '%s'" % identifier)
             image_list_identifiers.append(
                 cloudkeeper_pb2.ImageListIdentifier(
                     image_list_identifier=identifier
