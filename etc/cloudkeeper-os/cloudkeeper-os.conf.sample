@@ -15,6 +15,11 @@
 # Directory where the images are downloaded (string value)
 #tempdir = /tmp
 
+# Image visibility in OpenStack
+# options are  public, private, shared, community
+# 'private' is default
+#image_visibility = private
+
 #
 # From oslo.log
 #

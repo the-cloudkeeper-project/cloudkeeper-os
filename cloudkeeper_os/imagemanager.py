@@ -95,7 +95,8 @@ class ApplianceManager(object):
 
         glance_image = glance.images.create(name=appliance.title,
                                             disk_format=str.lower(image_format),
-                                            container_format="bare"
+                                            container_format="bare",
+                                            visibility=cfg.CONF.image_visibility
                                            )
         glance.images.upload(glance_image.id, image_data)
         glance.images.update(glance_image.id, **properties)

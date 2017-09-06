@@ -32,7 +32,10 @@ DEFAULT_OPTS = [
                     'are stored.'),
     cfg.StrOpt('tempdir',
                default='/tmp',
-               help='Directory where the images are downloaded')
+               help='Directory where the images are downloaded'),
+    cfg.StrOpt('image_visibility',
+                default='private',
+                help='Visibility of images uploaded to OpenStack')
 ]
 
 cfg.CONF.register_opts(DEFAULT_OPTS)
