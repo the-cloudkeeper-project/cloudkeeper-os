@@ -20,6 +20,9 @@
 # 'private' is default
 #image_visibility = private
 
+# Export custom image properties to OpenStack
+#export_custom_properties = true
+
 #
 # From oslo.log
 #

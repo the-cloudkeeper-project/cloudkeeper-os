@@ -101,7 +101,8 @@ class ApplianceManager(object):
                                             min_ram=min_ram
                                            )
         glance.images.upload(glance_image.id, image_data)
-        glance.images.update(glance_image.id, **properties)
+        if cfg.CONF.export_custom_properties:
+            glance.images.update(glance_image.id, **properties)
 
         image_data.close()
 

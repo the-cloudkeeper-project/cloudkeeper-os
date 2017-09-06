@@ -35,7 +35,10 @@ DEFAULT_OPTS = [
                help='Directory where the images are downloaded'),
     cfg.StrOpt('image_visibility',
                 default='private',
-                help='Visibility of images uploaded to OpenStack')
+                help='Visibility of images uploaded to OpenStack'),
+    cfg.BoolOpt('export_custom_properties',
+                default=True,
+                help='Export custom image properties to OpenStack')
 ]
 
 cfg.CONF.register_opts(DEFAULT_OPTS)
