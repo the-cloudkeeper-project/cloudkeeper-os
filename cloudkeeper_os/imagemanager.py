@@ -98,7 +98,8 @@ class ApplianceManager(object):
                                             disk_format=str.lower(image_format),
                                             container_format="bare",
                                             visibility=cfg.CONF.image_visibility,
-                                            min_ram=min_ram
+                                            min_ram=min_ram,
+                                            min_disk=cfg.CONF.min_disk
                                            )
         glance.images.upload(glance_image.id, image_data)
         if cfg.CONF.export_custom_properties:

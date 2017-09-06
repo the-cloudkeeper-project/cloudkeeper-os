@@ -23,6 +23,9 @@
 # Export custom image properties to OpenStack
 #export_custom_properties = true
 
+# Minimal disk size to match with OpenStack flavor
+#min_disk = 0
+
 #
 # From oslo.log
 #
