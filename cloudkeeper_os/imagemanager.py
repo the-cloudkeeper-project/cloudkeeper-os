@@ -102,8 +102,7 @@ class ApplianceManager(object):
                                             min_disk=cfg.CONF.min_disk
                                            )
         glance.images.upload(glance_image.id, image_data)
-        if cfg.CONF.export_custom_properties:
-            glance.images.update(glance_image.id, **properties)
+        glance.images.update(glance_image.id, **properties)
 
         image_data.close()
 

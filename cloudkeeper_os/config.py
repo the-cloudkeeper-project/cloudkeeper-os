@@ -36,9 +36,6 @@ DEFAULT_OPTS = [
     cfg.StrOpt('image_visibility',
                 default='private',
                 help='Visibility of images uploaded to OpenStack'),
-    cfg.BoolOpt('export_custom_properties',
-                default=True,
-                help='Export custom image properties to OpenStack'),
     cfg.IntOpt('min_disk',
                 default=0,
                 help='Minimal disk size to match with OpenStack flavor')
