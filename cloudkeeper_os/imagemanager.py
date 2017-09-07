@@ -34,6 +34,7 @@ LOG = log.getLogger(__name__)
 IMAGE_ID_TAG = constants.IMAGE_ID_TAG
 IMAGE_LIST_ID_TAG = constants.IMAGE_LIST_ID_TAG
 APPLIANCE_INT_VALUES = constants.APPLIANCE_INT_VALUES
+IMAGE_FOR_DELETION_TAG = constants.IMAGE_FOR_DELETION_TAG
 
 
 class ApplianceManager(object):
@@ -147,7 +148,7 @@ class ApplianceManager(object):
             return None
 
         LOG.info("Marking image for removal: '%s'" % glance_image.id)
-        glance.images.update(glance_image.id, visibility='private', **{'appliance_remove':'True'})
+        glance.images.update(glance_image.id, visibility='private', **{IMAGE_FOR_DELETION_TAG:'True'})
         return glance_image.id
 
 
@@ -181,7 +182,7 @@ class ImageListManager(object):
                 continue
 
             for image in image_list:
-                if IMAGE_LIST_ID_TAG in image:
+                if IMAGE_LIST_ID_TAG in image and not IMAGE_FOR_DELETION_TAG in image:
                     if image[IMAGE_LIST_ID_TAG] not in appliances:
                         appliances[image[IMAGE_LIST_ID_TAG]] = []
                     appliances[image[IMAGE_LIST_ID_TAG]].append(image)
