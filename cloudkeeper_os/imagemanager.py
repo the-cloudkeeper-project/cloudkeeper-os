@@ -116,17 +116,17 @@ class ApplianceManager(object):
         """Update an appliance stored in glance
         """
         LOG.info("Updating image: '%s'" % appliance.identifier)
-        LOG.debug("Deleting old release of the appliance")
-        old_image_id = self.remove_appliance(appliance)
-        LOG.debug("The glance image '%s' has been deleted" % old_image_id)
+        LOG.debug("Marking old release of the appliance for removal")
+        old_image_id = self.mark_appliance(appliance)
+        LOG.debug("The glance image '%s' has been marked for removal" % old_image_id)
         LOG.debug("Creating new release of the appliance")
         image_id = self.add_appliance(appliance)
         LOG.debug("The glance image '%s' has been created" % image_id)
         return image_id
 
 
-    def remove_appliance(self, appliance):
-        """Remove an appliance in glance
+    def mark_appliance(self, appliance):
+        """Mark an appliance in glance for removal
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         if not project_name:
@@ -143,11 +143,11 @@ class ApplianceManager(object):
         glance_image = utils.find_image(glance, appliance.identifier,
                                         appliance.image_list_identifier)
         if not glance_image:
-            LOG.info("Cannot delete image: image not found")
+            LOG.info("Cannot mark image for removal: image not found")
             return None
 
-        LOG.info("Deleting image: '%s'" % glance_image.id)
-        glance.images.delete(glance_image.id)
+        LOG.info("Marking image for removal: '%s'" % glance_image.id)
+        glance.images.update(glance_image.id, visibility='private', **{'appliance_remove':'True'})
         return glance_image.id
 
 
