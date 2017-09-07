@@ -148,9 +148,37 @@ class ApplianceManager(object):
             return None
 
         LOG.info("Marking image for removal: '%s'" % glance_image.id)
-        glance.images.update(glance_image.id, visibility='private', **{IMAGE_FOR_DELETION_TAG:'True'})
+        # APPLIANCE_REMOVE should be IMAGE_FOR_DELETION_TAG, i did not find a way how
+        glance.images.update(glance_image.id, visibility='private', **{'APPLIANCE_REMOVE':'True'})
         return glance_image.id
 
+    def cleanup_appliances(self):
+        """Try to remove all appliances marked for removal
+        """
+        for project_name in self.mapping.get_projects():
+            glance = openstack_client.get_glance_client(project_name)
+            if not glance:
+                LOG.error("Not authorized to manage images from the "
+                          "project: %s" % project_name)
+                continue
+            try:
+                img_generator = glance.images.list()
+                image_list = list(img_generator)
+            except Exception as err:
+                LOG.error("Not authorized to retrieve the image list from "
+                          "the project: %s" % project_name)
+                LOG.exception(err)
+                continue
+
+            for image in image_list:
+                if IMAGE_LIST_ID_TAG in image and IMAGE_FOR_DELETION_TAG in image:
+                    try:
+                        LOG.debug("Trying to delete image '%s'" % image['id'])
+                        glance.images.delete(image['id'])
+                        LOG.debug("Succesfully deleted image '%s'" % image['id'])
+                    except Exception as err:
+                        LOG.debug("Cannot cleanup image '%s'" % image['id'])
+                        LOG.debug(err)
 
 class ImageListManager(object):
     """A class for managing image lists
