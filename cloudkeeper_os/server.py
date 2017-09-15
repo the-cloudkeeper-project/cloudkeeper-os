@@ -50,6 +50,11 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         return cloudkeeper_pb2.Empty()
 
     def PostAction(self, request, context):
+        """Cleanup of images marked for removal
+        """
+        LOG.info("Cleaning up appliances marked for removal")
+        manager = imagemanager.ApplianceManager()
+        manager.cleanup_appliances()
         metadata = (
             ('status', 'SUCCESS'),
         )
@@ -98,9 +103,9 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         metadata = (
             ('status', 'SUCCESS'),
         )
-        LOG.info("Removing appliance: %s" % request.identifier)
+        LOG.info("Marking appliances for removal: %s" % request.identifier)
         manager = imagemanager.ApplianceManager()
-        if not manager.remove_appliance(request):
+        if not manager.mark_appliance(request):
             metadata = (
                 ('status', 'ERROR'),
             )
