@@ -88,6 +88,7 @@ class ApplianceManager(object):
 
         properties = utils.extract_appliance_properties(appliance)
         min_ram = int(properties.get("APPLIANCE_RAM", 0))
+
         properties[IMAGE_STATUS_TAG] = 'ACTIVE'
 
         LOG.debug("Creating image '%s' (format: '%s', "
