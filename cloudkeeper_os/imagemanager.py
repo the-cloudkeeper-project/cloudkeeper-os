@@ -87,7 +87,8 @@ class ApplianceManager(object):
         appliance.ClearField('image')
 
         properties = utils.extract_appliance_properties(appliance)
-        properties[IMAGE_STATUS_TAG] = 'Active'
+        min_ram = int(properties.get("APPLIANCE_RAM", 0))
+        properties[IMAGE_STATUS_TAG] = 'ACTIVE'
 
         LOG.debug("Creating image '%s' (format: '%s', "
                   "properties %s)" % (appliance.title,
@@ -97,7 +98,9 @@ class ApplianceManager(object):
 
         glance_image = glance.images.create(name=appliance.title,
                                             disk_format=str.lower(image_format),
-                                            container_format="bare"
+                                            container_format="bare",
+                                            visibility=CONF.image_visibility,
+                                            min_ram=min_ram
                                            )
         glance.images.upload(glance_image.id, image_data)
         glance.images.update(glance_image.id, **properties)
