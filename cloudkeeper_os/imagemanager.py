@@ -34,6 +34,7 @@ LOG = log.getLogger(__name__)
 IMAGE_ID_TAG = constants.IMAGE_ID_TAG
 IMAGE_LIST_ID_TAG = constants.IMAGE_LIST_ID_TAG
 APPLIANCE_INT_VALUES = constants.APPLIANCE_INT_VALUES
+IMAGE_STATUS_TAG = constants.IMAGE_STATUS_TAG
 
 
 class ApplianceManager(object):
@@ -86,6 +87,7 @@ class ApplianceManager(object):
         appliance.ClearField('image')
 
         properties = utils.extract_appliance_properties(appliance)
+        properties[IMAGE_STATUS_TAG] = 'Active'
 
         LOG.debug("Creating image '%s' (format: '%s', "
                   "properties %s)" % (appliance.title,
@@ -112,17 +114,17 @@ class ApplianceManager(object):
         """Update an appliance stored in glance
         """
         LOG.info("Updating image: '%s'" % appliance.identifier)
-        LOG.debug("Deleting old release of the appliance")
-        old_image_id = self.remove_appliance(appliance)
-        LOG.debug("The glance image '%s' has been deleted" % old_image_id)
+        LOG.debug("Marking appliance for removal")
+        old_image_id = self.mark_appliance_for_removal(appliance)
+        LOG.debug("The glance image '%s' has been marked" % old_image_id)
         LOG.debug("Creating new release of the appliance")
         image_id = self.add_appliance(appliance)
         LOG.debug("The glance image '%s' has been created" % image_id)
         return image_id
 
 
-    def remove_appliance(self, appliance):
-        """Remove an appliance in glance
+    def mark_appliance_for_removal(self, appliance):
+        """Mark an appliance in glance for removal
         """
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         if not project_name:
@@ -139,13 +141,44 @@ class ApplianceManager(object):
         glance_image = utils.find_image(glance, appliance.identifier,
                                         appliance.image_list_identifier)
         if not glance_image:
-            LOG.info("Cannot delete image: image not found")
+            LOG.info("Cannot mark image for removal: image not found")
             return None
 
-        LOG.info("Deleting image: '%s'" % glance_image.id)
-        glance.images.delete(glance_image.id)
+        LOG.info("Marking image for removal: '%s'" % glance_image.id)
+        properties = {}
+        properties[IMAGE_STATUS_TAG] = 'EOL'
+        glance.images.update(glance_image.id, visibility='private', **properties)
+
         return glance_image.id
 
+    def cleanup_appliances(self):
+        """Try to remove all appliances marked for removal
+        """
+        for project_name in self.mapping.get_projects():
+            glance = openstack_client.get_glance_client(project_name)
+            if not glance:
+                LOG.error("Not authorized to manage images from the "
+                          "project: %s" % project_name)
+                continue
+            try:
+                img_generator = glance.images.list()
+                image_list = list(img_generator)
+            except Exception as err:
+                LOG.error("Not authorized to retrieve the image list from "
+                          "the project: %s" % project_name)
+                LOG.exception(err)
+                continue
+
+            for image in image_list:
+                if IMAGE_LIST_ID_TAG in image:
+                    if IMAGE_STATUS_TAG in image and image[IMAGE_STATUS_TAG] == 'EOL':
+                        try:
+                            LOG.debug("Trying to delete image '%s'" % image['id'])
+                            glance.images.delete(image['id'])
+                            LOG.debug("Succesfully deleted image '%s'" % image['id'])
+                        except Exception as err:
+                            LOG.debug("Cannot cleanup image '%s'" % image['id'])
+                            LOG.debug(err)
 
 class ImageListManager(object):
     """A class for managing image lists
@@ -178,9 +211,10 @@ class ImageListManager(object):
 
             for image in image_list:
                 if IMAGE_LIST_ID_TAG in image:
-                    if image[IMAGE_LIST_ID_TAG] not in appliances:
-                        appliances[image[IMAGE_LIST_ID_TAG]] = []
-                    appliances[image[IMAGE_LIST_ID_TAG]].append(image)
+                    if IMAGE_STATUS_TAG in image and image[IMAGE_STATUS_TAG] != 'EOL':
+                        if image[IMAGE_LIST_ID_TAG] not in appliances:
+                            appliances[image[IMAGE_LIST_ID_TAG]] = []
+                        appliances[image[IMAGE_LIST_ID_TAG]].append(image)
 
         self.appliances = appliances
 
