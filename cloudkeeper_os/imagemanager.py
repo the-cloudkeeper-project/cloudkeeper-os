@@ -87,7 +87,9 @@ class ApplianceManager(object):
         appliance.ClearField('image')
 
         properties = utils.extract_appliance_properties(appliance)
-        min_ram = int(properties.get("APPLIANCE_RAM", 0))
+
+        # RAM in AppDB is in bytes
+        min_ram = int(properties.get("APPLIANCE_RAM", 0)/1048576)
 
         properties[IMAGE_STATUS_TAG] = 'ACTIVE'
 
