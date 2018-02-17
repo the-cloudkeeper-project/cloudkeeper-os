@@ -217,7 +217,7 @@ class ImageListManager(object):
 
             for image in image_list:
                 if IMAGE_LIST_ID_TAG in image:
-                    if IMAGE_STATUS_TAG in image and image[IMAGE_STATUS_TAG] != 'EOL':
+                    if (IMAGE_STATUS_TAG not in image) or (image[IMAGE_STATUS_TAG] != 'EOL'):
                         if image[IMAGE_LIST_ID_TAG] not in appliances:
                             appliances[image[IMAGE_LIST_ID_TAG]] = []
                         appliances[image[IMAGE_LIST_ID_TAG]].append(image)
@@ -237,7 +237,7 @@ class ImageListManager(object):
                 elif field == 'image_list_identifier':
                     key = IMAGE_LIST_ID_TAG
                 else:
-                    key = 'APPLIANCE_'+str.upper(field)
+                    key = 'APPLIANCE_' + str.upper(field)
                 if key in image:
                     if field in APPLIANCE_INT_VALUES:
                         properties[field] = long(image[key])
