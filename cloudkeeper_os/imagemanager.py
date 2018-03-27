@@ -181,7 +181,6 @@ class ApplianceManager(object):
                 continue
 
             for image in image_list:
-                LOG.debug(image)
                 if IMAGE_LIST_ID_TAG in image:
                     if IMAGE_STATUS_TAG in image and image[IMAGE_STATUS_TAG] == 'EOL':
                         try:
