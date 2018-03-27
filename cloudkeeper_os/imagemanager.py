@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2017 CNRS and University of Strasbourg
+# Copyright 2017-2018 CNRS and University of Strasbourg
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -88,8 +88,7 @@ class ApplianceManager(object):
 
         properties = utils.extract_appliance_properties(appliance)
 
-        # RAM in AppDB is in bytes
-        min_ram = int(properties.get("APPLIANCE_RAM", 0)/1048576)
+        min_ram = utils.convert_ram(int(properties.get("APPLIANCE_RAM", "0")))
 
         properties[IMAGE_STATUS_TAG] = 'ACTIVE'
 
@@ -119,10 +118,13 @@ class ApplianceManager(object):
     def update_appliance(self, appliance):
         """Update an appliance stored in glance
         """
-        LOG.info("Updating image: '%s'" % appliance.identifier)
-        LOG.debug("Marking appliance for removal")
-        old_image_id = self.mark_appliance_for_removal(appliance)
-        LOG.debug("The glance image '%s' has been marked" % old_image_id)
+        LOG.info("Updating appliance '%s'" % appliance.identifier)
+        image_list = self.mark_appliance_for_removal(appliance)
+        if not image_list:
+            LOG.error("Could not mark appliance for removal. Appliance will not be updated")
+            return None
+        LOG.debug("Old version of the '%s' appliance has been marked for "
+                  "removal" % appliance.identifier)
         LOG.debug("Creating new release of the appliance")
         image_id = self.add_appliance(appliance)
         LOG.debug("The glance image '%s' has been created" % image_id)
@@ -132,9 +134,10 @@ class ApplianceManager(object):
     def mark_appliance_for_removal(self, appliance):
         """Mark an appliance in glance for removal
         """
+        LOG.info("Marking appliance '%s' for removal" % appliance.identifier)
         project_name = self.mapping.get_project_from_vo(appliance.vo)
         if not project_name:
-            LOG.debug("Cannot get a project name mapped to the "
+            LOG.error("Cannot get a project name mapped to the "
                       "VO '%s'" % appliance.vo)
             return None
 
@@ -144,22 +147,24 @@ class ApplianceManager(object):
                       "project '%s'" % project_name)
             return None
 
-        glance_image = utils.find_image(glance, appliance.identifier,
-                                        appliance.image_list_identifier)
-        if not glance_image:
-            LOG.info("Cannot mark image for removal: image not found")
+        glance_images = utils.find_images(glance, appliance.identifier,
+                                          appliance.image_list_identifier)
+        if not glance_images:
+            LOG.error("Cannot mark image for removal: image not found")
             return None
 
-        LOG.info("Marking image for removal: '%s'" % glance_image.id)
         properties = {}
         properties[IMAGE_STATUS_TAG] = 'EOL'
-        glance.images.update(glance_image.id, visibility='private', **properties)
+        for image in glance_images:
+            LOG.debug("Marking image for removal: '%s'" % image.id)
+            glance.images.update(image.id, visibility='private', **properties)
 
-        return glance_image.id
+        return True
 
     def cleanup_appliances(self):
         """Try to remove all appliances marked for removal
         """
+        LOG.info("Cleaning up appliances")
         for project_name in self.mapping.get_projects():
             glance = openstack_client.get_glance_client(project_name)
             if not glance:
@@ -176,15 +181,16 @@ class ApplianceManager(object):
                 continue
 
             for image in image_list:
+                LOG.debug(image)
                 if IMAGE_LIST_ID_TAG in image:
                     if IMAGE_STATUS_TAG in image and image[IMAGE_STATUS_TAG] == 'EOL':
                         try:
-                            LOG.debug("Trying to delete image '%s'" % image['id'])
+                            LOG.debug("Deleting image '%s'" % image['id'])
                             glance.images.delete(image['id'])
-                            LOG.debug("Succesfully deleted image '%s'" % image['id'])
+                            LOG.debug("Image '%s' successfully deleted" % image['id'])
                         except Exception as err:
-                            LOG.debug("Cannot cleanup image '%s'" % image['id'])
-                            LOG.debug(err)
+                            LOG.error("Cannot delete image '%s'" % image['id'])
+                            LOG.error(err)
 
 class ImageListManager(object):
     """A class for managing image lists
@@ -201,6 +207,7 @@ class ImageListManager(object):
         appliances = {}
 
         for project_name in self.mapping.get_projects():
+            LOG.debug("Retrieving image list identifiers for project %s" % (project_name))
             glance = openstack_client.get_glance_client(project_name)
             if not glance:
                 LOG.error("Not authorized to manage images from the "
@@ -214,12 +221,13 @@ class ImageListManager(object):
                           "the project: %s" % project_name)
                 LOG.exception(err)
                 continue
-
             for image in image_list:
                 if IMAGE_LIST_ID_TAG in image:
                     if (IMAGE_STATUS_TAG not in image) or (image[IMAGE_STATUS_TAG] != 'EOL'):
                         if image[IMAGE_LIST_ID_TAG] not in appliances:
                             appliances[image[IMAGE_LIST_ID_TAG]] = []
+                        LOG.debug("Appending image with id %s to image list with "
+                                  "id %s" % (image[IMAGE_ID_TAG], image[IMAGE_LIST_ID_TAG]))
                         appliances[image[IMAGE_LIST_ID_TAG]].append(image)
 
         self.appliances = appliances
@@ -265,7 +273,7 @@ class ImageListManager(object):
         vo_name = self.appliances[image_list_identifier][0]['APPLIANCE_VO']
         project_name = self.mapping.get_project_from_vo(vo_name)
         if not project_name:
-            LOG.debug("Cannot get the project name mapped the "
+            LOG.error("Cannot get the project name mapped the "
                       "VO '%s'" % vo_name)
             return None
 

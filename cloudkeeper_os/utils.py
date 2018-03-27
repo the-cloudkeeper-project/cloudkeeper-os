@@ -18,6 +18,7 @@
 """
 
 import json
+import math
 import shutil
 import uuid
 
@@ -59,29 +60,29 @@ def retrieve_image(appliance):
     return filename
 
 
-def find_image(glance_client, identifier, image_list_identifier):
-    """Search for a glance image given a appliance and image list identifiers
+def find_images(glance_client, identifier, image_list_identifier):
+    """Search for glance images given a appliance and image list identifiers
     """
+    # Check that identifier and image_list_identifier are not too small
+    if len(identifier) <= 3:
+        LOG.error('The identifier %s is too small' % identifier)
+        return None
+    if len(image_list_identifier) <= 3:
+        LOG.error('The image_list_identifier %s is too small' % image_list_identifier)
+        return None
     filters = {IMAGE_ID_TAG: identifier,
                IMAGE_LIST_ID_TAG: image_list_identifier}
     kwargs = {'filters': filters}
     img_generator = glance_client.images.list(**kwargs)
     image_list = list(img_generator)
-
-    if len(image_list) > 1:
-        LOG.error("Multiple images found with the same properties "
-                  "(%s: %s, %s: %s)" % (IMAGE_ID_TAG, identifier,
-                                        IMAGE_LIST_ID_TAG,
-                                        image_list_identifier))
-        return None
-    elif len(image_list) == 0:
+    if len(image_list) == 0:
         LOG.error("No image found with the following properties "
                   "(%s: %s, %s: %s)" % (IMAGE_ID_TAG, identifier,
                                         IMAGE_LIST_ID_TAG,
                                         image_list_identifier))
         return None
     else:
-        return image_list[0]
+        return image_list
 
 def extract_appliance_properties(appliance):
     """Extract properties from an appliance
@@ -102,3 +103,9 @@ def extract_appliance_properties(appliance):
     # Add property for cloud-info-provider compatibility
     properties['vmcatcher_event_ad_mpuri'] = appliance.mpuri
     return properties
+
+def convert_ram(ram_value):
+    """Convert ram in bytes to the nearest upper integer in megabytes
+    """
+    return int(math.ceil(ram_value/1048576))
+
