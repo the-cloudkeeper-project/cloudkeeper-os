@@ -29,6 +29,7 @@ LOG = log.getLogger(__name__)
 
 CFG_GROUP = "keystone_authtoken"
 
+
 def get_session(project_name):
     """Get an auth session.
     """
@@ -36,6 +37,7 @@ def get_session(project_name):
     auth_params['project_name'] = project_name
     auth = v3.Password(**auth_params)
     return session.Session(auth=auth, verify=False)
+
 
 def get_glance_client(project_name):
     """Get a glance client

@@ -38,6 +38,7 @@ LOG = log.getLogger(__name__)
 CONF = cfg.CONF
 DOMAIN = "cloudkeeper-os"
 
+
 class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
     """Provides methods that implement functionnality of cloudkeeper server.
     """
@@ -120,7 +121,8 @@ class CommunicatorServicer(cloudkeeper_pb2_grpc.CommunicatorServicer):
         metadata = (
             ('status', 'SUCCESS'),
         )
-        LOG.info("Removing image list identifier: %s" % request.image_list_identifier)
+        LOG.info("Removing image list identifier "
+                 "identifier: %s" % request.image_list_identifier)
         manager = imagemanager.ImageListManager()
         manager.remove_image_list(request.image_list_identifier)
         LOG.debug("Sending metadata information ('%s': '%s')" % metadata[0])

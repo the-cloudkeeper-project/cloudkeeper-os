@@ -48,7 +48,8 @@ def retrieve_image(appliance):
     LOG.info("Download image from %s" % uri)
     auth = HTTPBasicAuth(username, password)
     response = requests.get(uri, auth=auth, stream=True)
-    LOG.debug("Response: %s when accessing the image." % str(response.status_code))
+    LOG.debug("Response: %s when accessing the "
+              "image." % str(response.status_code))
     if response.status_code == 200:
         output = open(filename, 'wb')
         shutil.copyfileobj(response.raw, output)
@@ -68,7 +69,8 @@ def find_images(glance_client, identifier, image_list_identifier):
         LOG.error('The identifier %s is too small' % identifier)
         return None
     if len(image_list_identifier) <= 3:
-        LOG.error('The image_list_identifier %s is too small' % image_list_identifier)
+        LOG.error("The image_list_identifier %s is too "
+                  "small" % image_list_identifier)
         return None
     filters = {IMAGE_ID_TAG: identifier,
                IMAGE_LIST_ID_TAG: image_list_identifier}
@@ -83,6 +85,7 @@ def find_images(glance_client, identifier, image_list_identifier):
         return None
     else:
         return image_list
+
 
 def extract_appliance_properties(appliance):
     """Extract properties from an appliance
@@ -104,8 +107,8 @@ def extract_appliance_properties(appliance):
     properties['vmcatcher_event_ad_mpuri'] = appliance.mpuri
     return properties
 
+
 def convert_ram(ram_value):
     """Convert ram in bytes to the nearest upper integer in megabytes
     """
     return int(math.ceil(ram_value/1048576))
-

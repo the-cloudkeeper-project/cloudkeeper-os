@@ -26,6 +26,7 @@ CONF = cfg.CONF
 
 LOG = log.getLogger(__name__)
 
+
 class Mapping(object):
     """An object for managing the VO / project mapping
     """
