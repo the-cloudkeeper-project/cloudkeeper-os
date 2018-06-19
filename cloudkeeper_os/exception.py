@@ -21,6 +21,7 @@ import six
 
 LOG = log.getLogger(__name__)
 
+
 @six.python_2_unicode_compatible
 class CloudkeeperException(Exception):
     """Base Cloudkeeper Exception.
@@ -61,4 +62,3 @@ class ProjectNotFound(CloudkeeperException):
     """Cloudkeeper exception raised when a project is not found.
     """
     message = "Project %(project_name)s could not be found."
-

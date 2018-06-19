@@ -43,7 +43,6 @@ class ApplianceManager(object):
     def __init__(self):
         self.mapping = mapping.Mapping()
 
-
     def add_appliance(self, appliance):
         """Add an appliance to glance
         """
@@ -92,18 +91,19 @@ class ApplianceManager(object):
 
         properties[IMAGE_STATUS_TAG] = 'ACTIVE'
 
-        LOG.debug("Creating image '%s' (format: '%s', "
-                  "properties %s)" % (appliance.title,
-                                      str.lower(image_format),
-                                      properties)
-                 )
+        LOG.debug(
+            "Creating image '%s' (format: '%s', "
+            "properties %s)" % (appliance.title, str.lower(image_format),
+                                properties)
+        )
 
-        glance_image = glance.images.create(name=appliance.title,
-                                            disk_format=str.lower(image_format),
-                                            container_format="bare",
-                                            visibility=CONF.image_visibility,
-                                            min_ram=min_ram
-                                           )
+        glance_image = glance.images.create(
+            name=appliance.title,
+            disk_format=str.lower(image_format),
+            container_format="bare",
+            visibility=CONF.image_visibility,
+            min_ram=min_ram
+        )
         glance.images.upload(glance_image.id, image_data)
         glance.images.update(glance_image.id, **properties)
 
@@ -121,7 +121,8 @@ class ApplianceManager(object):
         LOG.info("Updating appliance '%s'" % appliance.identifier)
         image_list = self.mark_appliance_for_removal(appliance)
         if not image_list:
-            LOG.error("Could not mark appliance for removal. Appliance will not be updated")
+            LOG.error("Could not mark appliance for removal. "
+                      "Appliance will not be updated")
             return None
         LOG.debug("Old version of the '%s' appliance has been marked for "
                   "removal" % appliance.identifier)
@@ -129,7 +130,6 @@ class ApplianceManager(object):
         image_id = self.add_appliance(appliance)
         LOG.debug("The glance image '%s' has been created" % image_id)
         return image_id
-
 
     def mark_appliance_for_removal(self, appliance):
         """Mark an appliance in glance for removal
@@ -182,14 +182,17 @@ class ApplianceManager(object):
 
             for image in image_list:
                 if IMAGE_LIST_ID_TAG in image:
-                    if IMAGE_STATUS_TAG in image and image[IMAGE_STATUS_TAG] == 'EOL':
+                    if (IMAGE_STATUS_TAG in image and
+                            image[IMAGE_STATUS_TAG] == 'EOL'):
                         try:
                             LOG.debug("Deleting image '%s'" % image['id'])
                             glance.images.delete(image['id'])
-                            LOG.debug("Image '%s' successfully deleted" % image['id'])
+                            LOG.debug("Image '%s' successfully "
+                                      "deleted" % image['id'])
                         except Exception as err:
                             LOG.error("Cannot delete image '%s'" % image['id'])
                             LOG.error(err)
+
 
 class ImageListManager(object):
     """A class for managing image lists
@@ -206,7 +209,8 @@ class ImageListManager(object):
         appliances = {}
 
         for project_name in self.mapping.get_projects():
-            LOG.debug("Retrieving image list identifiers for project %s" % (project_name))
+            LOG.debug("Retrieving image list identifiers for "
+                      "project %s" % (project_name))
             glance = openstack_client.get_glance_client(project_name)
             if not glance:
                 LOG.error("Not authorized to manage images from the "
@@ -222,11 +226,15 @@ class ImageListManager(object):
                 continue
             for image in image_list:
                 if IMAGE_LIST_ID_TAG in image:
-                    if (IMAGE_STATUS_TAG not in image) or (image[IMAGE_STATUS_TAG] != 'EOL'):
+                    if (IMAGE_STATUS_TAG not in image or
+                            image[IMAGE_STATUS_TAG] != 'EOL'):
                         if image[IMAGE_LIST_ID_TAG] not in appliances:
                             appliances[image[IMAGE_LIST_ID_TAG]] = []
-                        LOG.debug("Appending image with id %s to image list with "
-                                  "id %s" % (image[IMAGE_ID_TAG], image[IMAGE_LIST_ID_TAG]))
+                        LOG.debug(
+                            "Appending image with id %s to image list with "
+                            "id %s" % (image[IMAGE_ID_TAG],
+                                       image[IMAGE_LIST_ID_TAG])
+                        )
                         appliances[image[IMAGE_LIST_ID_TAG]].append(image)
 
         self.appliances = appliances
@@ -247,7 +255,7 @@ class ImageListManager(object):
                     key = 'APPLIANCE_' + str.upper(field)
                 if key in image:
                     if field in APPLIANCE_INT_VALUES:
-                        properties[field] = long(image[key])
+                        properties[field] = int(image[key])
                     elif field == 'attributes':
                         properties[field] = json.loads(image[key])
                     else:

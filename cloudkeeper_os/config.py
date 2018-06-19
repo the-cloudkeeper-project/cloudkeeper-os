@@ -62,13 +62,14 @@ AUTHTOKEN_OPTS = [
 AUTHTOKEN_GROUP = 'keystone_authtoken'
 cfg.CONF.register_opts(AUTHTOKEN_OPTS, AUTHTOKEN_GROUP)
 
+
 def parse_args(argv, default_config_files=None):
     """Parse arguments
     """
     cfg.CONF(argv[1:],
              project='cloudkeeper-os',
              default_config_files=default_config_files)
-    #version=cloudkeeper_os.__version__,
+
 
 def list_opts():
     """List options
