@@ -36,8 +36,8 @@ class Mapping(object):
         try:
             mapping = json.loads(open(CONF.mapping_file).read())
             for (vo_name, details) in mapping.items():
-                self.vo_mapping[vo_name] = details['tenant']
-                self.project_mapping[details['tenant']] = vo_name
+                self.vo_mapping[vo_name] = details['project']
+                self.project_mapping[details['project']] = vo_name
         except IOError:
             LOG.error("Failed to open mapping file.")
 
