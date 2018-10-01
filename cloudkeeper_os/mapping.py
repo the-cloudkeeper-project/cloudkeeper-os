@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""A set of tools for manipulating voms mapping file
+"""A set of tools for manipulating mapping file
 """
 
 import json

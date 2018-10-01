@@ -10,7 +10,7 @@
 #grpc_port = 50051
 
 # Directory where the cloud credentials for each VO are stored. (string value)
-#mapping_file = /etc/cloudkeeper-os/voms.json
+#mapping_file = /etc/cloudkeeper-os/mapping.json
 
 # Directory where the images are downloaded (string value)
 #tempdir = /tmp
