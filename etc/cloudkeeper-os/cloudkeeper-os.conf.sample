@@ -10,7 +10,7 @@
 #grpc_port = 50051
 
 # Directory where the cloud credentials for each VO are stored. (string value)
-#mapping_file = /etc/cloudkeeper-os/voms.json
+#mapping_file = /etc/cloudkeeper-os/mapping.json
 
 # Directory where the images are downloaded (string value)
 #tempdir = /tmp
@@ -96,7 +96,7 @@
 
 # Defines the format string for %(user_identity)s that is used in
 # logging_context_format_string. (string value)
-#logging_user_identity_format = %(user)s %(tenant)s %(domain)s %(user_domain)s %(project_domain)s
+#logging_user_identity_format = %(user)s %(project)s %(domain)s %(user_domain)s %(project_domain)s
 
 # List of package logging levels in logger=LEVEL pairs. This option is ignored
 # if log_config_append is set. (list value)

@@ -27,7 +27,7 @@ DEFAULT_OPTS = [
                 default=50051,
                 help='The port on which the server will listen.'),
     cfg.StrOpt('mapping_file',
-               default='/etc/cloudkeeper-os/voms.json',
+               default='/etc/cloudkeeper-os/mapping.json',
                help='Directory where the cloud credentials for each VO '
                     'are stored.'),
     cfg.StrOpt('tempdir',

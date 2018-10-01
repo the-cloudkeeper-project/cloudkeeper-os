@@ -1,8 +1,0 @@
-{
-    "dteam": {
-        "tenant": "EGI_dteam"
-    },
-    "ops": {
-        "tenant": "EGI_ops"
-    }
-}

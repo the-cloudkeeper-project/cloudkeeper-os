@@ -42,7 +42,7 @@ In the created directory, run the ``setup.py`` script::
   $ python setup.py install
   $ mkdir /etc/cloudkeeper-os
   $ cp etc/cloudkeeper-os.conf.sample /etc/cloudkeeper-os/cloudkeeper-os.conf
-  $ cp etc/cloudkeeper-os/voms.json /etc/cloudkeeper-os/voms.json
+  $ cp etc/cloudkeeper-os/mapping.json /etc/cloudkeeper-os/mapping.json
 
 Create the ``/usr/lib/systemd/system/cloudkeeper-os.service`` systemd service
 file with the following content to manage the **cloudkeeper-os** daemon::
@@ -92,14 +92,15 @@ For example::
   auth_url = http://controller:5000/v3
 
 
-In addition, you have to edit the ``voms.json`` JSON file to map correctly the
+In addition, you have to edit the ``mapping.json`` JSON file to map correctly the
 VO and the OpenStack project's name. Note that you can use the same JSON file
 as for the `keystone-voms <https://ifca.github.io/keystone-voms/>`_ component,
-by setting the *mapping_file* parameter with the path to ``voms.json`` file
-in the ``cloudkeeper-os.conf`` file.
+by setting the *mapping_file* parameter with the path to ``mapping.json`` file
+in the ``cloudkeeper-os.conf`` file (this file is called ``voms.json`` in the
+keystone-voms project).
 
 Note that the user defined by the *username* parameter should have the right
-to manage the images for all the project defined in the ``voms.json`` file.
+to manage the images for all the project defined in the ``mapping.json`` file.
 
 To take into account the modifications, do not forget to restart the
 *cloudkeeper-os* service.
