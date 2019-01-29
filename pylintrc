@@ -1,4 +1,3 @@
-[Typecheck]
-# Disable warnings on the cloudkeeper_pb2 classes because pylint doesn't
-# support importing from cloudkeeper_pb2 yet.
-ignored-modules = cloudkeeper_os.cloudkeeper_pb2
+[FORMAT]
+
+max-line-length = 120
