@@ -24,6 +24,7 @@ pylint = "^2.2"
 pep8-naming = "^0.7"
 safety = "^1.8"
 bandit = "^1.4"
+grpcio-tools = "^1.18"
 
 [tool.poetry.scripts]
 cloudkeeper-os = "cloudkeeper_os.main:run"
