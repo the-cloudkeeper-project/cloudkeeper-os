@@ -11,6 +11,7 @@ repository = "https://github.com/the-cloudkeeper-project/cloudkeeper-os"
 python = "^3.6"
 "oslo.config" = "^6.5"
 "oslo.log" = "^3.40"
+setuptools = "^40.8"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"

@@ -8,11 +8,13 @@ from oslo_config import cfg
 
 from oslo_log import log as logging
 
+import pkg_resources
+
 DEFAULT_GROUP = "DEFAULT"
 DEFAULT_OPTIONS = [
     cfg.StrOpt(
         "identifier",
-        help="CloudkeeperOS instance identifier",
+        help="Cloudkeeper-OS instance identifier",
         default="cloudkeeper-os",
         required=True,
     )
@@ -237,7 +239,10 @@ def configure():
     logging.register_options(conf)
     logging.setup(conf, PROJECT_NAME)
 
-    conf(default_config_dirs=CONF_DIRS, project=PROJECT_NAME)
+    conf(default_config_dirs=CONF_DIRS,
+         project=PROJECT_NAME,
+         version=pkg_resources.get_distribution(PROJECT_NAME).version
+         )
 
     _validate_configuration(conf)
 
