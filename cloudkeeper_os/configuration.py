@@ -28,7 +28,7 @@ CONNECTION_OPTIONS = [
     cfg.StrOpt(
         "listen-address",
         help="IP address Cloudkeeper-OS will listen on",
-        default="127.0.0.1",
+        default="127.0.0.1:50051",
         required=True,
     ),
     cfg.BoolOpt(
