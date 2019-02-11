@@ -8,3 +8,4 @@ exclude =
     cloudkeeper_os/grpc/cloudkeeper_pb2.py,
     cloudkeeper_os/grpc/cloudkeeper_pb2_grpc.py
 max-line-length = 120
+ignore = I100
