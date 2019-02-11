@@ -12,6 +12,7 @@ python = "^3.6"
 "oslo.config" = "^6.5"
 "oslo.log" = "^3.40"
 setuptools = "^40.8"
+grpcio = "^1.18"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"
