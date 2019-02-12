@@ -11,7 +11,25 @@ Cloudkeeper-OS is able to manage [OpenStack](https://www.openstack.org/) CMF - u
 ## Requirements
 TODO
 ## Installation
+### From PyPi
 TODO
+### From source (development only)
+**Installation from source should never be your first choice! However, if you wish to contribute to our project, this is the right way to start.**
+#### Development environment
+Cloudkeeper-OS dependencies and packaging are managed via [Poetry](https://poetry.eustace.io/). Poetry has to be installed in order to install dependencies and run tests and linter checks.
+
+To build and install the bleeding edge version from master
+```bash
+git clone git://github.com/the-cloudkeeper-project/cloudkeeper-os.git
+cd cloudkeeper-os
+poetry install
+poetry run invoke test && poetry run invoke acceptance
+```
+Cloudkeeper-OS uses [Invoke](http://www.pyinvoke.org/) to run tests and linter checks. There are currently two tasks available:
+* `test` - running tests
+* `acceptance` - running various linters and security checks
+
+If you want to know what exactly these tasks do, take a look at [tasks.py](tasks.py).
 ## Configuration
 TODO
 ## Usage
