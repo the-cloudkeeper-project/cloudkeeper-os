@@ -77,23 +77,40 @@ APPLIANCES_OPTIONS = [
 OPENSTACK_OPT_AUTH_TYPE = "auth-type"
 OPENSTACK_OPT_USERNAME = "username"
 OPENSTACK_OPT_PASSWORD = "password"
+OPENSTACK_OPT_USER_DOMAIN_NAME = "user-domain-name"
+OPENSTACK_OPT_PROJECT_NAME = "project-name"
+OPENSTACK_OPT_PROJECT_DOMAIN_NAME = "project-domain-name"
 OPENSTACK_OPT_OIDC_ACCESS_TOKEN = "oidc-access-token"
+OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER = "oidc-identity-provider"
+OPENSTACK_OPT_OIDC_PROTOCOL = "oidc-protocol"
+OPENSTACK_OPT_OIDC_REFRESH_TOKEN = "oidc-refresh-token"
 OPENSTACK_OPT_OIDC_CLIENT_ID = "oidc-client-id"
 OPENSTACK_OPT_OIDC_CLIENT_SECRET = "oidc-client-secret"
-OPENSTACK_OPT_OIDC_REFRESH_TOKEN = "oidc-refresh-token"
+OPENSTACK_OPT_OIDC_DISCOVERY_ENDPOINT = "oidc-discovery-endpoint"
 OPENSTACK_OPT_APPLICATION_CREDENTIAL_NAME = "application-credential-name"
 OPENSTACK_OPT_APPLICATION_CREDENTIAL_SECRET = "application-credential-secret"
 OPENSTACK_AUTH_TYPES = {
     "v3oidcaccesstoken": {
         "description": "Auth via OIDC access token",
-        "required": (OPENSTACK_OPT_OIDC_ACCESS_TOKEN,),
+        "required": (
+            OPENSTACK_OPT_OIDC_ACCESS_TOKEN,
+            OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER,
+            OPENSTACK_OPT_OIDC_PROTOCOL,
+            OPENSTACK_OPT_PROJECT_NAME,
+            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
+        ),
     },
     "v3oidcrefreshtoken": {
         "description": "Auth via OIDC refresh token",
         "required": (
+            OPENSTACK_OPT_OIDC_REFRESH_TOKEN,
             OPENSTACK_OPT_OIDC_CLIENT_ID,
             OPENSTACK_OPT_OIDC_CLIENT_SECRET,
-            OPENSTACK_OPT_OIDC_REFRESH_TOKEN,
+            OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER,
+            OPENSTACK_OPT_OIDC_PROTOCOL,
+            OPENSTACK_OPT_OIDC_DISCOVERY_ENDPOINT,
+            OPENSTACK_OPT_PROJECT_NAME,
+            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
         ),
     },
     "v3applicationcredential": {
@@ -102,17 +119,24 @@ OPENSTACK_AUTH_TYPES = {
             OPENSTACK_OPT_APPLICATION_CREDENTIAL_NAME,
             OPENSTACK_OPT_APPLICATION_CREDENTIAL_SECRET,
             OPENSTACK_OPT_USERNAME,
+            OPENSTACK_OPT_USER_DOMAIN_NAME
         ),
     },
     "v3password": {
         "description": "Auth via username and password",
-        "required": (OPENSTACK_OPT_USERNAME, OPENSTACK_OPT_PASSWORD),
+        "required": (
+            OPENSTACK_OPT_USERNAME,
+            OPENSTACK_OPT_PASSWORD,
+            OPENSTACK_OPT_USER_DOMAIN_NAME,
+            OPENSTACK_OPT_PROJECT_NAME,
+            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
+        ),
     },
 }
 OPENSTACK_GROUP = "openstack"
 OPENSTACK_OPTIONS = [
     cfg.StrOpt(
-        "region",
+        "region-name",
         help="OpenStack region",
         default="default",
         required=True),
@@ -126,24 +150,6 @@ OPENSTACK_OPTIONS = [
         "allow-remote-source",
         help="Allows OpenStack to directly download remote image",
         default=True,
-        required=True,
-    ),
-    cfg.StrOpt(
-        "user-domain",
-        help="OpenStack user domain",
-        default="default",
-        required=True
-    ),
-    cfg.StrOpt(
-        "project-name",
-        help="OpenStack project name",
-        default="default",
-        required=True
-    ),
-    cfg.StrOpt(
-        "project-domain",
-        help="OpenStack project domain",
-        default="default",
         required=True,
     ),
     cfg.StrOpt(
@@ -181,9 +187,39 @@ OPENSTACK_OPTIONS = [
         secret=True
     ),
     cfg.StrOpt(
+        OPENSTACK_OPT_USER_DOMAIN_NAME,
+        help="OpenStack user domain",
+        default="default"
+    ),
+    cfg.StrOpt(
+        OPENSTACK_OPT_PROJECT_NAME,
+        help="OpenStack project name",
+        default="default"
+    ),
+    cfg.StrOpt(
+        OPENSTACK_OPT_PROJECT_DOMAIN_NAME,
+        help="OpenStack project domain",
+        default="default"
+    ),
+    cfg.StrOpt(
         OPENSTACK_OPT_OIDC_ACCESS_TOKEN,
         help="OpenStack OIDC access token",
         secret=True
+    ),
+    cfg.StrOpt(
+        OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER,
+        help="OpenStack OIDC identity provider",
+        secret=True
+    ),
+    cfg.StrOpt(
+        OPENSTACK_OPT_OIDC_PROTOCOL,
+        help="OpenStack OIDC protocol",
+        secret=True
+    ),
+    cfg.StrOpt(
+        OPENSTACK_OPT_OIDC_REFRESH_TOKEN,
+        help="OpenStack OIDC refresh token",
+        secret=True,
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_OIDC_CLIENT_ID,
@@ -196,8 +232,8 @@ OPENSTACK_OPTIONS = [
         secret=True,
     ),
     cfg.StrOpt(
-        OPENSTACK_OPT_OIDC_REFRESH_TOKEN,
-        help="OpenStack OIDC refresh token",
+        OPENSTACK_OPT_OIDC_DISCOVERY_ENDPOINT,
+        help="OpenStack OIDC discovery endpoint",
         secret=True,
     ),
     cfg.StrOpt(
