@@ -141,6 +141,11 @@ OPENSTACK_OPTIONS = [
         default="default",
         required=True),
     cfg.StrOpt(
+        "glance-interface",
+        help="OpenStack Glance interface",
+        default="public",
+        required=True),
+    cfg.StrOpt(
         "api-call-timeout",
         help="How long will Cloudkeeper-OS wait for OpenStack to finish operations",
         default="3h",
