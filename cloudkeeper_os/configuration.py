@@ -237,14 +237,17 @@ def configure():
     _configure_options(conf, OPENSTACK_OPTIONS, OPENSTACK_GROUP)
 
     logging.register_options(conf)
-    logging.setup(conf, PROJECT_NAME)
 
     conf(default_config_dirs=CONF_DIRS,
          project=PROJECT_NAME,
          version=pkg_resources.get_distribution(PROJECT_NAME).version
          )
 
+    logging.setup(conf, PROJECT_NAME)
+
     _validate_configuration(conf)
+
+    conf.log_opt_values(logging.getLogger(__name__), logging.DEBUG)
 
     return conf
 
