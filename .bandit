@@ -1,0 +1,2 @@
+[bandit]
+exclude: .venv,.pytest_cache,cloudkeeper_os.egg-info,.git,tests

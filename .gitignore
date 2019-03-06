@@ -1,0 +1,6 @@
+/cloudkeeper_os.egg-info/
+/.venv/
+/.idea/
+/.pytest_cache/
+/poetry.lock
+__pycache__

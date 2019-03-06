@@ -1,0 +1,11 @@
+[flake8]
+exclude =
+    .git,
+    __pycache__,
+    .pytest_cache
+    .venv,
+    cloudkeeper_os.egg-info,
+    cloudkeeper_os/grpc/cloudkeeper_pb2.py,
+    cloudkeeper_os/grpc/cloudkeeper_pb2_grpc.py
+max-line-length = 120
+ignore = I100

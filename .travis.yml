@@ -1,9 +1,19 @@
 language: python
 python:
-    "2.7"
+  - "3.6"
+  - "3.7"
+dist: xenial
 
+fast_finish: true
+
+branches:
+  only:
+    - master
+
+before_install:
+  - pip install poetry
 install:
-    - pip install tox
-
+  - poetry install
 script:
-    - tox
+  - poetry run invoke acceptance
+  - poetry run invoke test
