@@ -15,6 +15,7 @@ setuptools = "^40.8"
 grpcio = "^1.18"
 keystoneauth1 = "^3.11"
 keystoneauth-oidc-refreshtoken = "^0.1"
+python-glanceclient = "^2.15"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"
