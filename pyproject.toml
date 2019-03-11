@@ -13,6 +13,8 @@ python = "^3.6"
 "oslo.log" = "^3.40"
 setuptools = "^40.8"
 grpcio = "^1.18"
+keystoneauth1 = "^3.11"
+keystoneauth-oidc-refreshtoken = "^0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"
@@ -26,6 +28,8 @@ pep8-naming = "^0.7"
 safety = "^1.8"
 bandit = "^1.4"
 grpcio-tools = "^1.18"
+fixtures = "^3.0"
+pytest-mock="^1.10"
 
 [tool.poetry.scripts]
 cloudkeeper-os = "cloudkeeper_os.main:run"
