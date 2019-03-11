@@ -11,7 +11,8 @@ branches:
     - master
 
 before_install:
-  - pip install poetry
+  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+  - export PATH="$HOME/.poetry/bin:$PATH"
 install:
   - poetry install
 script:
