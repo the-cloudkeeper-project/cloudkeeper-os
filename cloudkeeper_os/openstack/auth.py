@@ -41,7 +41,7 @@ def _auth_options(auth_type):
 
     raise exceptions.UnknownAuthMethod()
 
-
+# return and print the result of called func to debug log
 def _log_options(func):
     def func_wrapper():
         options = func()
@@ -49,7 +49,7 @@ def _log_options(func):
         return options
     return func_wrapper
 
-
+# return merged two dict returned from received funcs
 def _merge_options(func_name):
     def merge_options_decorator(func):
         def func_wrapper():
@@ -67,6 +67,7 @@ def _project_auth_options():
 
 def _common_auth_options():
     return {
+        # Ex. {'auth_url': 'https://identity.localhost:5000/v3'}
         "auth_url": f"{CONF.openstack.identity_endpoint}/{CONF.openstack.identity_api_version}",
     }
 
