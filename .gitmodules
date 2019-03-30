@@ -1,3 +1,0 @@
-[submodule "cloudkeeper_os/grpc/cloudkeeper-proto"]
-	path = cloudkeeper_os/grpc/cloudkeeper-proto
-	url = https://github.com/the-cloudkeeper-project/cloudkeeper-proto
