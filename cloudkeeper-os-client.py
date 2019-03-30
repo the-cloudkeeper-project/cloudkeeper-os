@@ -31,33 +31,33 @@ def run():
     with grpc.insecure_channel('127.0.0.1:50051') as channel:
         # channel = grpc.insecure_channel('localhost:50051')
         stub = cloudkeeper_pb2_grpc.CommunicatorStub(channel)
-        response = stub.AddAppliance(cloudkeeper_pb2.Appliance(identifier='TestImage',
+        response = stub.AddAppliance(cloudkeeper_pb2.Appliance(identifier='2a5451eb-91f3-46a2-95a7-9cff7362d553',
                                                                 title='simulated_image',
                                                                 description='simulated image for testing',
                                                                 mpuri='',
                                                                 group='group1',
-                                                                ram=3,
+                                                                ram=2048,
                                                                 core=4,
-                                                                version='v2',
-                                                                architecture='architecture1',
+                                                                version='0.0.5867',
+                                                                architecture='x86_64',
                                                                 operating_system='OpenSuse',
-                                                                vo='vo1',
-                                                                expiration_date=24032021,
-                                                                image_list_identifier='55',
+                                                                vo='some.dummy.vo',
+                                                                expiration_date=1556582400,
+                                                                image_list_identifier='76fdee70-8119-5d33-aaaa-3c57e1c60df1',
                                                                 base_mpuri='',
-                                                                appid='15',
+                                                                appid='993',
                                                                 digest='digest',
                                                                 image=cloudkeeper_pb2.Image(
                                                                         mode=cloudkeeper_pb2.Image.REMOTE,
                                                                         format=cloudkeeper_pb2.Image.RAW,
                                                                         location='/tmp/myimage.iso',
                                                                         digest='SHA',
-                                                                                        uri='uri/uri',
-                                                                                        checksum='checksumvalue',
-                                                                                        size=512,
-                                                                                        username='demo',
-                                                                                        password='openstack',
-                                                                                        )
+                                                                        uri='uri/uri',
+                                                                        checksum='checksumvalue',
+                                                                        size=512,
+                                                                        username='demo',
+                                                                        password='openstack',
+                                                                        )
                                                                 )
                                         )
 

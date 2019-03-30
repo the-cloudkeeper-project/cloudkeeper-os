@@ -14,20 +14,48 @@ class Handler:
     def __init__(self):
         self.client = glance.client()
 
-    def register_image(self, request):
+    def register_appliance(self, request):
+        """
+        Register appliance in OpenStack
+        """
+
+        name = request.operating_system + '-' + request.version + '-' + request.architecture
+        appliance = self.client.images.create(name=name)
+
+        self.register_image(request.image, appliance.id)
+
+        params = {
+            'description': request.description,
+            'mpuri': request.mpuri,
+            'group': request.group,
+            'min_ram': request.ram,
+            'min_disk': request.core,
+            'version': request.version,
+            'architecture': request.architecture,
+            'operating_system': request.operating_system,
+            'vo': request.vo,
+            'expiration_date': str(request.expiration_date),
+            'image_list_identifier': request.image_list_identifier,
+            'base_mpuri': request.base_mpuri,
+            'appid': request.appid
+        }
+
+        self.client.images.update(appliance.id, **params)
+
+    def register_image(self, request, image_id):
         """
         Register image in OpenStack
         """
-        image = self.client.images.create(name=request.identifier)
-
-        disk_format = cloudkeeper_pb2._IMAGE_FORMAT.values[request.image.format].name.lower()
-        self.client.images.update(image.id, disk_format=disk_format)
+        disk_format = cloudkeeper_pb2._IMAGE_FORMAT.values[request.format].name.lower()
+        image = self.client.images.update(image_id, disk_format=disk_format)
 
         container_format = 'aki'
-        self.client.images.update(image.id, container_format=container_format)
-        self.client.images.update(image.id, mode=cloudkeeper_pb2._IMAGE_MODE.values[request.image.mode].name)
+        image = self.client.images.update(image_id, container_format=container_format)
 
-        self.client.images.upload(image.id, open(request.image.location, 'rb'))
+        mode = cloudkeeper_pb2._IMAGE_MODE.values[request.mode].name
+        image = self.client.images.update(image_id, mode=mode)
+
+        image = self.client.images.upload(image_id, open(request.location, 'rb'))
 
     def set_tags(self):
         """

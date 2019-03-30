@@ -19,7 +19,7 @@ class CoreConnector(cloudkeeper_pb2_grpc.CommunicatorServicer):
 
     def AddAppliance(self, request, context):  # noqa: N802
         h = handler.Handler()
-        h.register_image(request)
+        h.register_appliance(request)
         return cloudkeeper_pb2.Empty()
 
     def UpdateAppliance(self, request, context):  # noqa: N802
