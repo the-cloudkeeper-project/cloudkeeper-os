@@ -1,0 +1,3 @@
+[submodule "cloudkeeper-grpc-python"]
+	path = cloudkeeper_os/grpc/cloudkeeper_grpc_python
+	url = https://github.com/the-cloudkeeper-project/cloudkeeper-grpc-python
