@@ -1,8 +1,11 @@
 """
 gRPC method handling
 """
-from cloudkeeper_os.grpc import cloudkeeper_pb2_grpc
 
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
+
+from cloudkeeper_os.openstack import handler
 
 class CoreConnector(cloudkeeper_pb2_grpc.CommunicatorServicer):
     """
@@ -15,7 +18,9 @@ class CoreConnector(cloudkeeper_pb2_grpc.CommunicatorServicer):
         raise NotImplementedError
 
     def AddAppliance(self, request, context):  # noqa: N802
-        raise NotImplementedError
+        h = handler.Handler()
+        h.register_appliance(request)
+        return cloudkeeper_pb2.Empty()
 
     def UpdateAppliance(self, request, context):  # noqa: N802
         raise NotImplementedError
