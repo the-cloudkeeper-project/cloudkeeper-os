@@ -2,7 +2,7 @@
 OpenStack communication handling
 """
 
-from cloudkeeper_os.grpc import cloudkeeper_pb2
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python.cloudkeeper_proto import cloudkeeper_pb2
 
 from cloudkeeper_os.openstack import glance
 

@@ -18,8 +18,8 @@ import logging
 
 import grpc
 
-from cloudkeeper_os.grpc import cloudkeeper_pb2
-from cloudkeeper_os.grpc import cloudkeeper_pb2_grpc
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
 
 from oslo_config import cfg
 

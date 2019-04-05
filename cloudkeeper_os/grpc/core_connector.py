@@ -2,8 +2,8 @@
 gRPC method handling
 """
 
-from cloudkeeper_os.grpc import cloudkeeper_pb2
-from cloudkeeper_os.grpc import cloudkeeper_pb2_grpc
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
 
 from cloudkeeper_os.openstack import handler
 
