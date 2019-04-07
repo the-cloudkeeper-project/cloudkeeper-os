@@ -1,8 +1,9 @@
 """
 OpenStack communication handling
 """
+import time
 
-from cloudkeeper_os.grpc.cloudkeeper_grpc_python.cloudkeeper_proto import cloudkeeper_pb2
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
 
 from cloudkeeper_os.openstack import glance
 
@@ -14,6 +15,56 @@ class Handler:
     def __init__(self):
         self.client = glance.client()
 
+    def appliance_metadata_to_dict(self, request):
+        """
+        Parsing Appliance metadata to dictionary
+        """
+
+        APPLIANCE_TAGS_PREFIX = 'CLOUDKEEPER_'
+        params = {}
+
+        if request.title:
+            params[APPLIANCE_TAGS_PREFIX + 'title'] = request.title
+        if request.description:
+            params[APPLIANCE_TAGS_PREFIX + 'description'] = request.description
+            params['description'] = request.description
+        if request.mpuri:
+            params[APPLIANCE_TAGS_PREFIX + 'mpuri'] = request.mpuri
+        if request.group:
+            params[APPLIANCE_TAGS_PREFIX + 'group'] = request.group
+        if request.ram:
+            params[APPLIANCE_TAGS_PREFIX + 'ram'] = str(request.ram)
+            params['min_ram'] = request.ram
+        if request.core:
+            params[APPLIANCE_TAGS_PREFIX + 'core'] = str(request.core)
+            params['min_disk'] = request.core
+        if request.version:
+            params[APPLIANCE_TAGS_PREFIX + 'version'] = request.version
+        if request.architecture:
+            params[APPLIANCE_TAGS_PREFIX + 'architecture'] = request.architecture
+        if request.operating_system:
+            params[APPLIANCE_TAGS_PREFIX + 'operating_system'] = request.operating_system
+        if request.vo:
+            params[APPLIANCE_TAGS_PREFIX + 'vo'] = request.vo
+        if request.expiration_date:
+            params[APPLIANCE_TAGS_PREFIX + 'expiration_date'] = str(request.expiration_date)
+        if request.image_list_identifier:
+            params[APPLIANCE_TAGS_PREFIX + 'image_list_identifier'] = request.image_list_identifier
+        if request.base_mpuri:
+            params[APPLIANCE_TAGS_PREFIX + 'base_mpuri'] = request.base_mpuri
+        if request.appid:
+            params[APPLIANCE_TAGS_PREFIX + 'appid'] = request.appid
+
+        return params
+
+    def get_appliance(self, appliance_id):
+        """
+        Getting appliance from Openstack
+        """
+
+        appliance = self.client.images.get(appliance_id)
+        return appliance
+
     def register_appliance(self, request):
         """
         Register appliance in OpenStack
@@ -24,59 +75,57 @@ class Handler:
 
         self.register_image(request.image, appliance.id)
 
-        params = {
-            'description': request.description,
-            'mpuri': request.mpuri,
-            'group': request.group,
-            'min_ram': request.ram,
-            'min_disk': request.core,
-            'version': request.version,
-            'architecture': request.architecture,
-            'operating_system': request.operating_system,
-            'vo': request.vo,
-            'expiration_date': str(request.expiration_date),
-            'image_list_identifier': request.image_list_identifier,
-            'base_mpuri': request.base_mpuri,
-            'appid': request.appid
-        }
+        params = self.appliance_metadata_to_dict(request)
 
-        self.client.images.update(appliance.id, **params)
+        self.update_tags(appliance.id, **params)
 
     def register_image(self, request, image_id):
         """
-        Register image in OpenStack
+        Upload image in Openstack
         """
-        disk_format = cloudkeeper_pb2._IMAGE_FORMAT.values[request.format].name.lower()
+
+        disk_format = cloudkeeper_pb2.Image.DiskFormat.Format.Name(request.disk_format).lower()
         image = self.client.images.update(image_id, disk_format=disk_format)
 
-        container_format = 'aki'
+        container_format = cloudkeeper_pb2.Image.ContainerFormat.Format.Name(request.container_format).lower()
         image = self.client.images.update(image_id, container_format=container_format)
 
-        mode = cloudkeeper_pb2._IMAGE_MODE.values[request.mode].name
+        mode = cloudkeeper_pb2.Image.Mode.Name(request.mode)
         image = self.client.images.update(image_id, mode=mode)
 
         image = self.client.images.upload(image_id, open(request.location, 'rb'))
 
-    def set_tags(self):
+    def update_tags(self, appliance_id, **params):
         """
-        Set metadata for image
+        Update metadata for Appliance
         """
-        raise NotImplementedError
 
-    def update_tags(self):
-        """
-        Update metadata for image
-        """
-        raise NotImplementedError
+        self.client.images.update(appliance_id, **params)
 
-    def delete_image(self):
+    def remove_appliance(self, appliance_id):
         """
-        Delete image from OpenStack
+        Delete appliance from OpenStack
         """
-        raise NotImplementedError
+
+        self.client.images.delete(appliance_id)
 
     def list_images(self):
         """
         List images from OpenStack
         """
-        raise NotImplementedError
+        image_list = self.client.images.list()
+
+        return image_list
+
+    def remove_expired_appliances(self):
+        """
+        Remove expired appliances from OpenStack
+        """
+
+        image_list = self.list_images()
+        current_time = time.time()
+
+        for image in image_list:
+            if 'CLOUDKEEPER_expiration_date' in image:
+                if int(image['CLOUDKEEPER_expiration_date']) < current_time:
+                    self.remove_appliance(image['id'])
