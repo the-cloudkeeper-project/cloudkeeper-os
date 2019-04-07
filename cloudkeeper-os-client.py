@@ -48,8 +48,9 @@ def run():
                                                                 appid='993',
                                                                 digest='digest',
                                                                 image=cloudkeeper_pb2.Image(
-                                                                        mode=cloudkeeper_pb2.Image.REMOTE,
-                                                                        format=cloudkeeper_pb2.Image.RAW,
+                                                                        # mode=cloudkeeper_pb2.Image.Mode.REMOTE,
+                                                                        disk_format=cloudkeeper_pb2.Image.DiskFormat.Format.RAW,
+                                                                        container_format=cloudkeeper_pb2.ContainerFormat.AKI,
                                                                         location='/tmp/myimage.iso',
                                                                         digest='SHA',
                                                                         uri='uri/uri',
