@@ -84,13 +84,13 @@ class Handler:
         Upload image in Openstack
         """
 
-        disk_format = cloudkeeper_pb2._IMAGE_FORMAT.values[request.format].name.lower()
+        disk_format = cloudkeeper_pb2.Image.DiskFormat.Format.Name(request.disk_format).lower()
         image = self.client.images.update(image_id, disk_format=disk_format)
 
-        container_format = 'aki'
+        container_format = cloudkeeper_pb2.Image.ContainerFormat.Format.Name(request.container_format).lower()
         image = self.client.images.update(image_id, container_format=container_format)
 
-        mode = cloudkeeper_pb2._IMAGE_MODE.values[request.mode].name
+        mode = cloudkeeper_pb2.Image.Mode.Name(request.mode)
         image = self.client.images.update(image_id, mode=mode)
 
         image = self.client.images.upload(image_id, open(request.location, 'rb'))
