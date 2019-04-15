@@ -79,21 +79,27 @@ class Handler:
 
         self.update_tags(appliance.id, **params)
 
+        # print(self.client.)
+
     def register_image(self, request, image_id):
         """
         Upload image in Openstack
         """
 
-        disk_format = cloudkeeper_pb2.Image.DiskFormat.Format.Name(request.disk_format).lower()
-        image = self.client.images.update(image_id, disk_format=disk_format)
+        format = cloudkeeper_pb2.Image.Format.Name(request.format).lower()
+        image = self.client.images.update(image_id, disk_format=format)
 
-        container_format = cloudkeeper_pb2.Image.ContainerFormat.Format.Name(request.container_format).lower()
+        container_format = cloudkeeper_pb2.Image.Format.Name(request.container_format).lower()
         image = self.client.images.update(image_id, container_format=container_format)
 
-        mode = cloudkeeper_pb2.Image.Mode.Name(request.mode)
-        image = self.client.images.update(image_id, mode=mode)
+        # mode = cloudkeeper_pb2.Image.Mode.Name(request.mode)
+        mode = request.mode
 
-        image = self.client.images.upload(image_id, open(request.location, 'rb'))
+        if (mode == 0):
+            image = self.client.images.upload(image_id, open(request.location, 'rb'))
+        elif (mode == 1):
+            print('using REMOTE')
+            image = self.client.images.upload(image_id, request.location)
 
     def update_tags(self, appliance_id, **params):
         """

@@ -20,11 +20,11 @@ import grpc
 
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
+from cloudkeeper_os.openstack import handler
 
 from oslo_config import cfg
 
-
-def run():
+def test():
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
     # used in circumstances in which the with statement does not fit the needs
     # of the code.
@@ -48,11 +48,10 @@ def run():
                                                                 appid='993',
                                                                 digest='digest',
                                                                 image=cloudkeeper_pb2.Image(
-                                                                        mode=cloudkeeper_pb2.Image.REMOTE,
-                                                                        format=cloudkeeper_pb2.Image.QCOW2,
+                                                                        # mode=cloudkeeper_pb2.Image.REMOTE,
+                                                                        format=cloudkeeper_pb2.Image.RAW,
                                                                         container_format=cloudkeeper_pb2.Image.AKI,
-                                                                        # location='/tmp/myimage.iso',
-                                                                        location='https://sourceforge.net/projects/osboxes/files/v/vb/39-O-s-se/Leap-15.0/k/L150K64.7z/download',
+                                                                        location='/tmp/myimage.iso',
                                                                         digest='SHA',
                                                                         uri='uri/uri',
                                                                         checksum='checksumvalue',
@@ -67,4 +66,4 @@ def run():
 
 if __name__ == '__main__':
     logging.basicConfig()
-    run()
+    test()
