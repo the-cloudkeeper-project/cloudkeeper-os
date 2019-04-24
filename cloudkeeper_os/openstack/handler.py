@@ -93,13 +93,18 @@ class Handler:
         image = self.client.images.update(image_id, container_format=container_format)
 
         # mode = cloudkeeper_pb2.Image.Mode.Name(request.mode)
-        mode = request.mode
 
-        if (mode == 0):
+        if (request.mode == cloudkeeper_pb2.Image.LOCAL):
+
+            print('using LOCAL')
             image = self.client.images.upload(image_id, open(request.location, 'rb'))
-        elif (mode == 1):
+
+        elif (request.mode == cloudkeeper_pb2.Image.REMOTE):
+
             print('using REMOTE')
-            image = self.client.images.upload(image_id, request.location)
+            # image = self.client.images.upload(image_id, method='web-download', uri=request.uri)
+            # self.client.images.import_image(image, method='web-download', uri=request.uri)
+            self.client.images.image_import(image_id, method='web-download', uri=request.uri)
 
     def update_tags(self, appliance_id, **params):
         """

@@ -27,11 +27,6 @@ class CoreConnector(cloudkeeper_pb2_grpc.CommunicatorServicer):
 
         self.UpdateApplianceMetadata(request, context)
 
-        if request.image:
-            h.register_image(request.image, request.identifier)
-        else:
-            return cloudkeeper_pb2.Empty()
-
     def UpdateApplianceMetadata(self, request, context):  # noqa: N802
         h = handler.Handler()
         params = h.appliance_metadata_to_dict(request)

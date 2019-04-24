@@ -20,11 +20,11 @@ import grpc
 
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
-from cloudkeeper_os.openstack import handler
 
 from oslo_config import cfg
 
-def test():
+
+def run():
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
     # used in circumstances in which the with statement does not fit the needs
     # of the code.
@@ -48,13 +48,12 @@ def test():
                                                                 appid='993',
                                                                 digest='digest',
                                                                 image=cloudkeeper_pb2.Image(
-                                                                        # mode=cloudkeeper_pb2.Image.REMOTE,
-                                                                        format=cloudkeeper_pb2.Image.RAW,
+                                                                        mode=cloudkeeper_pb2.Image.LOCAL,
+                                                                        format=cloudkeeper_pb2.Image.QCOW2,
                                                                         container_format=cloudkeeper_pb2.Image.AKI,
-                                                                        # location='/tmp/myimage.iso',
-                                                                        location='https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
+                                                                        location='/tmp/myimage.iso',
                                                                         digest='SHA',
-                                                                        uri='uri/uri',
+                                                                        uri='https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
                                                                         checksum='checksumvalue',
                                                                         size=512,
                                                                         username='demo',
@@ -67,4 +66,4 @@ def test():
 
 if __name__ == '__main__':
     logging.basicConfig()
-    test()
+    run()
