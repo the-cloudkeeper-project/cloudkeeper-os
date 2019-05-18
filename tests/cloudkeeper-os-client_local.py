@@ -32,9 +32,8 @@ def run():
         # channel = grpc.insecure_channel('localhost:50051')
         stub = cloudkeeper_pb2_grpc.CommunicatorStub(channel)
         response = stub.AddAppliance(cloudkeeper_pb2.Appliance(identifier='2a5451eb-91f3-46a2-95a7-9cff7362d553',
-                                                                title='simulated_image',
                                                                 description='simulated image for testing',
-                                                                mpuri='',
+                                                                mpuri='asd',
                                                                 group='group1',
                                                                 ram=2048,
                                                                 core=4,
@@ -50,8 +49,8 @@ def run():
                                                                 image=cloudkeeper_pb2.Image(
                                                                         mode=cloudkeeper_pb2.Image.LOCAL,
                                                                         format=cloudkeeper_pb2.Image.QCOW2,
-                                                                        container_format=cloudkeeper_pb2.Image.AKI,
-                                                                        location='/tmp/myimage.iso',
+                                                                        container_format=cloudkeeper_pb2.Image.BARE,
+                                                                        location='/tmp/cirros-0.4.0-x86_64-disk.img',
                                                                         digest='SHA',
                                                                         uri='https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
                                                                         checksum='checksumvalue',
@@ -61,7 +60,8 @@ def run():
                                                                         )
                                                                 )
                                         )
-
+        # for i in stub.Appliances(cloudkeeper_pb2.ImageListIdentifier()):
+        #         print(i)
         print("Greeter client received: " + str(response))
 
 if __name__ == '__main__':

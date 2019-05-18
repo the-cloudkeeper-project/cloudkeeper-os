@@ -2,11 +2,11 @@
 OpenStack communication handling
 """
 import time
+from oslo_log import log
 
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
 
 from cloudkeeper_os.openstack import glance
-
 
 class Handler:
     """
@@ -14,48 +14,98 @@ class Handler:
     """
     def __init__(self):
         self.client = glance.client()
+        self.APPLIANCE_TAGS_PREFIX = 'CLOUDKEEPER_'
 
     def appliance_metadata_to_dict(self, request):
         """
         Parsing Appliance metadata to dictionary
         """
 
-        APPLIANCE_TAGS_PREFIX = 'CLOUDKEEPER_'
         params = {}
 
         if request.title:
-            params[APPLIANCE_TAGS_PREFIX + 'title'] = request.title
+            params[self.APPLIANCE_TAGS_PREFIX + 'title'] = request.title
+            params['name'] = request.title
         if request.description:
-            params[APPLIANCE_TAGS_PREFIX + 'description'] = request.description
+            params[self.APPLIANCE_TAGS_PREFIX + 'description'] = request.description
             params['description'] = request.description
         if request.mpuri:
-            params[APPLIANCE_TAGS_PREFIX + 'mpuri'] = request.mpuri
+            params[self.APPLIANCE_TAGS_PREFIX + 'mpuri'] = request.mpuri
         if request.group:
-            params[APPLIANCE_TAGS_PREFIX + 'group'] = request.group
+            params[self.APPLIANCE_TAGS_PREFIX + 'group'] = request.group
         if request.ram:
-            params[APPLIANCE_TAGS_PREFIX + 'ram'] = str(request.ram)
+            params[self.APPLIANCE_TAGS_PREFIX + 'ram'] = str(request.ram)
             params['min_ram'] = request.ram
         if request.core:
-            params[APPLIANCE_TAGS_PREFIX + 'core'] = str(request.core)
+            params[self.APPLIANCE_TAGS_PREFIX + 'core'] = str(request.core)
             params['min_disk'] = request.core
         if request.version:
-            params[APPLIANCE_TAGS_PREFIX + 'version'] = request.version
+            params[self.APPLIANCE_TAGS_PREFIX + 'version'] = request.version
         if request.architecture:
-            params[APPLIANCE_TAGS_PREFIX + 'architecture'] = request.architecture
+            params[self.APPLIANCE_TAGS_PREFIX + 'architecture'] = request.architecture
         if request.operating_system:
-            params[APPLIANCE_TAGS_PREFIX + 'operating_system'] = request.operating_system
+            params[self.APPLIANCE_TAGS_PREFIX + 'operating_system'] = request.operating_system
         if request.vo:
-            params[APPLIANCE_TAGS_PREFIX + 'vo'] = request.vo
+            params[self.APPLIANCE_TAGS_PREFIX + 'vo'] = request.vo
         if request.expiration_date:
-            params[APPLIANCE_TAGS_PREFIX + 'expiration_date'] = str(request.expiration_date)
+            params[self.APPLIANCE_TAGS_PREFIX + 'expiration_date'] = str(request.expiration_date)
         if request.image_list_identifier:
-            params[APPLIANCE_TAGS_PREFIX + 'image_list_identifier'] = request.image_list_identifier
+            params[self.APPLIANCE_TAGS_PREFIX + 'image_list_identifier'] = request.image_list_identifier
         if request.base_mpuri:
-            params[APPLIANCE_TAGS_PREFIX + 'base_mpuri'] = request.base_mpuri
+            params[self.APPLIANCE_TAGS_PREFIX + 'base_mpuri'] = request.base_mpuri
         if request.appid:
-            params[APPLIANCE_TAGS_PREFIX + 'appid'] = request.appid
+            params[self.APPLIANCE_TAGS_PREFIX + 'appid'] = request.appid
+        if request.digest:
+            params[self.APPLIANCE_TAGS_PREFIX + 'digest'] = request.digest
 
         return params
+
+    def image_dict_to_appliance_message(self, request):
+        # print([i.json_name for i in cloudkeeper_pb2.Appliance().DESCRIPTOR.fields])
+
+        appliance_dict = {}
+        
+        for k, v in request.items():
+            if self.APPLIANCE_TAGS_PREFIX in k:
+                if k.replace(self.APPLIANCE_TAGS_PREFIX, '') == 'expiration_date':
+                    appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = int(v)
+                else:
+                    appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = v
+            else:
+                print(str(k) + " - " + str(v))
+
+        if 'id' in request:
+            appliance_dict['identifier'] = request['id']
+        if 'name' in request:
+            appliance_dict['title'] = request['name']
+        if 'description' in request:
+            appliance_dict['description'] = request['description']
+        if 'min_ram' in request:
+            appliance_dict['ram'] = int(request['min_ram'])
+        if 'min_disk' in request:
+            appliance_dict['core'] = int(request['min_disk'])
+
+        image_dict = {}
+
+
+        if 'os_hash_algo' in request:
+            image_dict['digest'] = request['os_hash_algo']
+        if 'size' in request:
+            image_dict['size'] = request['size']
+        if 'checksum' in request:
+            image_dict['checksum'] = request['checksum']
+        if 'container_format' in request:
+            try:
+                image_dict['container_format'] = cloudkeeper_pb2.Image.Format.Value(request['container_format'].upper())
+            except:
+                pass
+        if 'disk_format' in request:
+            try:
+                image_dict['format'] = cloudkeeper_pb2.Image.Format.Value(request['disk_format'].upper())
+            except:
+                pass
+
+        return([appliance_dict, image_dict])
 
     def get_appliance(self, appliance_id):
         """
@@ -111,21 +161,25 @@ class Handler:
         Update metadata for Appliance
         """
 
-        self.client.images.update(appliance_id, **params)
+        image = self.client.images.update(appliance_id, **params)
+
+        return image
 
     def remove_appliance(self, appliance_id):
         """
         Delete appliance from OpenStack
         """
 
-        self.client.images.delete(appliance_id)
+        image = self.client.images.delete(appliance_id)
+
+        print(image)
 
     def list_images(self):
         """
         List images from OpenStack
         """
         image_list = self.client.images.list()
-
+        print(image_list)
         return image_list
 
     def remove_expired_appliances(self):
