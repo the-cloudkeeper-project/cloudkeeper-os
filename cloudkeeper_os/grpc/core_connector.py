@@ -6,8 +6,8 @@ from oslo_log import log
 
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
-
 from cloudkeeper_os.openstack import handler
+
 
 class CoreConnector(cloudkeeper_pb2_grpc.CommunicatorServicer):
     """
@@ -31,17 +31,14 @@ class CoreConnector(cloudkeeper_pb2_grpc.CommunicatorServicer):
 
     def UpdateAppliance(self, request, context):  # noqa: N802
         h = handler.Handler()
-
         h.register_image(request.image, request.identifier)
-
-        image = self.UpdateApplianceMetadata(request)
-
+        self.UpdateApplianceMetadata(request)
         return cloudkeeper_pb2.Empty()
 
     def UpdateApplianceMetadata(self, request, context):  # noqa: N802
         h = handler.Handler()
         params = h.appliance_metadata_to_dict(request)
-        image = h.update_tags(request.identifier, **params)
+        h.update_tags(request.identifier, **params)
         return cloudkeeper_pb2.Empty()
 
     def RemoveAppliance(self, request, context):  # noqa: N802

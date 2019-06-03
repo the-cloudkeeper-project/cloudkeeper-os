@@ -14,17 +14,16 @@
 """The Python implementation of the GRPC helloworld.Greeter client."""
 
 from __future__ import print_function
+
 import logging
 import random
 import string
-from pprint import pprint
 
 import grpc
 
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
 
-from oslo_config import cfg
 
 def gen_rand_name():
     """
@@ -32,6 +31,7 @@ def gen_rand_name():
     """
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for i in range(30))
+
 
 def if_name_in_list(gen_name, appliances_names):
     """
@@ -41,6 +41,7 @@ def if_name_in_list(gen_name, appliances_names):
         return True
     else:
         return False
+
 
 def get_appliances_titles_list(stub):
 
@@ -53,6 +54,7 @@ def get_appliances_titles_list(stub):
         exit()
 
     return appliances_names
+
 
 def get_appliance(stub, gen_name):
 
@@ -68,38 +70,37 @@ def get_appliance(stub, gen_name):
 
     return appliance
 
-Image_dict = {
-                'mode': cloudkeeper_pb2.Image.LOCAL,
-                'format': cloudkeeper_pb2.Image.QCOW2,
-                'container_format': cloudkeeper_pb2.Image.BARE,
-                'location': 'tests/demo_images/cirros-0.4.0-x86_64-disk.img',
-                'digest': 'SHA',
-                'uri': 'https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
-                'checksum': 'checksumvalue',
-                'size': 512,
-                'username': 'demo',
-                'password': 'openstack'
 
-                }
+Image_dict = {'mode': cloudkeeper_pb2.Image.LOCAL,
+              'format': cloudkeeper_pb2.Image.QCOW2,
+              'container_format': cloudkeeper_pb2.Image.BARE,
+              'location': 'tests/demo_images/cirros-0.4.0-x86_64-disk.img',
+              'digest': 'SHA',
+              'uri': 'https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
+              'checksum': 'checksumvalue',
+              'size': 512,
+              'username': 'demo',
+              'password': 'openstack'
+              }
 
-Appliance_dict = {
-                    'description': 'testing_image',
-                    'mpuri': '',
-                    'group': 'group1',
-                    'ram': 2048,
-                    'core': 4,
-                    'version': '0.0.5867',
-                    'architecture': 'x86_64',
-                    'operating_system': 'OpenSuse',
-                    'vo': 'some.dummy.vo',
-                    'expiration_date': 1556582400,
-                    'image_list_identifier': '76fdee70-8119-5d33-aaaa-3c57e1c60df1',
-                    'base_mpuri': '',
-                    'appid': '993',
-                    'digest': 'digest',
-                    'image': cloudkeeper_pb2.Image(**Image_dict)
 
-                    }
+Appliance_dict = {'description': 'testing_image',
+                  'mpuri': '',
+                  'group': 'group1',
+                  'ram': 2048,
+                  'core': 4,
+                  'version': '0.0.5867',
+                  'architecture': 'x86_64',
+                  'operating_system': 'OpenSuse',
+                  'vo': 'some.dummy.vo',
+                  'expiration_date': 1556582400,
+                  'image_list_identifier': '76fdee70-8119-5d33-aaaa-3c57e1c60df1',
+                  'base_mpuri': '',
+                  'appid': '993',
+                  'digest': 'digest',
+                  'image': cloudkeeper_pb2.Image(**Image_dict)
+                  }
+
 
 def run():
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
@@ -108,8 +109,8 @@ def run():
     with grpc.insecure_channel('127.0.0.1:50051') as channel:
         # channel = grpc.insecure_channel('localhost:50051')
         stub = cloudkeeper_pb2_grpc.CommunicatorStub(channel)
-        
-        #TODO: finish Appliances method in core_connector, so it could use find()
+
+        # TODO: finish Appliances method in core_connector, so it could use find()
 
         name_in_list = True
 
@@ -138,7 +139,9 @@ def run():
         print('Description of appliance: ' + str(get_appliance(stub, gen_name).description))
 
         try:
-            new_appliance = stub.UpdateApplianceMetadata(cloudkeeper_pb2.Appliance(identifier=str(get_appliance(stub, gen_name).identifier), description='updated_testing_image'))
+            new_appliance = stub.UpdateApplianceMetadata(cloudkeeper_pb2.Appliance(
+                identifier=str(get_appliance(stub, gen_name).identifier),
+                description='updated_testing_image'))
         except Exception as err:
             print('Error while updating appliance using UpdateApplianceMetadata method \n\n Error: ' + str(err))
             exit()
@@ -153,8 +156,9 @@ def run():
         # Image_dict['location'] = 'tests/demo_images/Fedora-Cloud-Base-30-1.2.x86_64.qcow2'
 
         # try:
-        #     new_appliance = stub.UpdateAppliance(cloudkeeper_pb2.Appliance(identifier=str(get_appliance(stub, gen_name).identifier), 
-        #                                                                     image=cloudkeeper_pb2.Image(**Image_dict)))
+        #     new_appliance = stub.UpdateAppliance(cloudkeeper_pb2.Appliance(
+        #         identifier=str(get_appliance(stub, gen_name).identifier),
+        #         image=cloudkeeper_pb2.Image(**Image_dict)))
         # except Exception as err:
         #     print('Error while updating image using UpdateAppliance method \n\n Error: ' + str(err))
         #     exit()
@@ -163,10 +167,10 @@ def run():
         #     print('Updated, Size of Image: ' + str(get_appliance(stub, gen_name).image.size))
         # else:
         #     print('Error: Your UpdateAppliance method doesn\'t work well... Image wasn\'t updated')
-        
 
         try:
-            new_appliance = stub.RemoveAppliance(cloudkeeper_pb2.Appliance(identifier=str(get_appliance(stub, gen_name).identifier)))
+            new_appliance = stub.RemoveAppliance(cloudkeeper_pb2.Appliance(
+                identifier=str(get_appliance(stub, gen_name).identifier)))
         except Exception as err:
             print('Error while removing appliance using RemoveAppliance method \n\n Error: ' + str(err))
             exit()
@@ -179,12 +183,13 @@ def run():
             print('!!! DON\'T FORGET TO REMOVE TESTING APPLIANCE MANUALLY !!!')
         else:
             print('Removed')
-        
 
         # response = stub.AddAppliance(cloudkeeper_pb2.Appliance(**Appliance_dict, title=)
-        # response = stub.RemoveAppliance(cloudkeeper_pb2.Appliance(identifier='10c8551c-4b0e-403d-8421-fa240fd9bc0f', title='asd'))
-        
+        # response = stub.RemoveAppliance(cloudkeeper_pb2.Appliance(identifier='10c8551c-4b0e-403d-8421-fa240fd9bc0f',
+        #     title='asd'))
+
         # pprint(response)
+
 
 if __name__ == '__main__':
     logging.basicConfig()

@@ -41,6 +41,7 @@ def _auth_options(auth_type):
 
     raise exceptions.UnknownAuthMethod()
 
+
 # return and print the result of called func to debug log
 def _log_options(func):
     def func_wrapper():
@@ -48,6 +49,7 @@ def _log_options(func):
         LOG.debug(f"Auth method options: {options}")
         return options
     return func_wrapper
+
 
 # return merged two dict returned from received funcs
 def _merge_options(func_name):
