@@ -2,11 +2,10 @@
 OpenStack communication handling
 """
 import time
-from oslo_log import log
 
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
-
 from cloudkeeper_os.openstack import glance
+
 
 class Handler:
     """
@@ -64,7 +63,7 @@ class Handler:
         # print([i.json_name for i in cloudkeeper_pb2.Appliance().DESCRIPTOR.fields])
 
         appliance_dict = {}
-        
+
         for k, v in request.items():
             if self.APPLIANCE_TAGS_PREFIX in k:
                 if k.replace(self.APPLIANCE_TAGS_PREFIX, '') == 'expiration_date':
@@ -87,7 +86,6 @@ class Handler:
 
         image_dict = {}
 
-
         if 'os_hash_algo' in request:
             image_dict['digest'] = request['os_hash_algo']
         if 'size' in request:
@@ -95,15 +93,9 @@ class Handler:
         if 'checksum' in request:
             image_dict['checksum'] = request['checksum']
         if 'container_format' in request:
-            try:
-                image_dict['container_format'] = cloudkeeper_pb2.Image.Format.Value(request['container_format'].upper())
-            except:
-                pass
+            image_dict['container_format'] = cloudkeeper_pb2.Image.Format.Value(request['container_format'].upper())
         if 'disk_format' in request:
-            try:
-                image_dict['format'] = cloudkeeper_pb2.Image.Format.Value(request['disk_format'].upper())
-            except:
-                pass
+            image_dict['format'] = cloudkeeper_pb2.Image.Format.Value(request['disk_format'].upper())
 
         return([appliance_dict, image_dict])
 
@@ -137,20 +129,18 @@ class Handler:
         """
 
         format = cloudkeeper_pb2.Image.Format.Name(request.format).lower()
-        image = self.client.images.update(image_id, disk_format=format)
+        self.client.images.update(image_id, disk_format=format)
 
         container_format = cloudkeeper_pb2.Image.Format.Name(request.container_format).lower()
-        image = self.client.images.update(image_id, container_format=container_format)
+        self.client.images.update(image_id, container_format=container_format)
 
         # mode = cloudkeeper_pb2.Image.Mode.Name(request.mode)
 
         if (request.mode == cloudkeeper_pb2.Image.LOCAL):
-
             print('using LOCAL')
-            image = self.client.images.upload(image_id, open(request.location, 'rb'))
+            self.client.images.upload(image_id, open(request.location, 'rb'))
 
         elif (request.mode == cloudkeeper_pb2.Image.REMOTE):
-
             print('using REMOTE')
             # image = self.client.images.upload(image_id, method='web-download', uri=request.uri)
             # self.client.images.import_image(image, method='web-download', uri=request.uri)
@@ -162,7 +152,6 @@ class Handler:
         """
 
         image = self.client.images.update(appliance_id, **params)
-
         return image
 
     def remove_appliance(self, appliance_id):
@@ -171,13 +160,13 @@ class Handler:
         """
 
         image = self.client.images.delete(appliance_id)
-
         print(image)
 
     def list_images(self):
         """
         List images from OpenStack
         """
+
         image_list = self.client.images.list()
         print(image_list)
         return image_list
@@ -186,7 +175,6 @@ class Handler:
         """
         Remove expired appliances from OpenStack
         """
-
         image_list = self.list_images()
         current_time = time.time()
 
