@@ -5,7 +5,7 @@ exclude =
     .pytest_cache
     .venv,
     cloudkeeper_os.egg-info,
-    cloudkeeper_os/grpc/cloudkeeper_pb2.py,
-    cloudkeeper_os/grpc/cloudkeeper_pb2_grpc.py
+    cloudkeeper_os/grpc/cloudkeeper_grpc_python/cloudkeeper_pb2.py,
+    cloudkeeper_os/grpc/cloudkeeper-grpc-python/cloudkeeper_pb2_grpc.py
 max-line-length = 120
 ignore = I100

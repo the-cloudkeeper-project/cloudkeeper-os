@@ -8,7 +8,7 @@ import grpc
 
 from oslo_config import cfg
 
-from cloudkeeper_os.grpc import cloudkeeper_pb2_grpc
+from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
 from cloudkeeper_os.grpc.core_connector import CoreConnector
 
 

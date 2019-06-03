@@ -1,4 +1,5 @@
 /cloudkeeper_os.egg-info/
+/.vscode/
 /.venv/
 /.idea/
 /.pytest_cache/
