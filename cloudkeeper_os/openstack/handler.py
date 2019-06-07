@@ -7,67 +7,70 @@ from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
 from cloudkeeper_os.openstack import glance
 
 
+APPLIANCE_TAGS_PREFIX = 'CLOUDKEEPER_'
+
+def appliance_metadata_to_dict(request):
+    """
+    Parsing Appliance metadata to dictionary
+    """
+
+    params = {}
+
+    if request.title:
+        params[APPLIANCE_TAGS_PREFIX + 'title'] = request.title
+        params['name'] = request.title
+    if request.description:
+        params[APPLIANCE_TAGS_PREFIX + 'description'] = request.description
+        params['description'] = request.description
+    if request.mpuri:
+        params[APPLIANCE_TAGS_PREFIX + 'mpuri'] = request.mpuri
+    if request.group:
+        params[APPLIANCE_TAGS_PREFIX + 'group'] = request.group
+    if request.ram:
+        params[APPLIANCE_TAGS_PREFIX + 'ram'] = str(request.ram)
+        params['min_ram'] = request.ram
+    if request.core:
+        params[APPLIANCE_TAGS_PREFIX + 'core'] = str(request.core)
+        params['min_disk'] = request.core
+    if request.version:
+        params[APPLIANCE_TAGS_PREFIX + 'version'] = request.version
+    if request.architecture:
+        params[APPLIANCE_TAGS_PREFIX + 'architecture'] = request.architecture
+    if request.operating_system:
+        params[APPLIANCE_TAGS_PREFIX + 'operating_system'] = request.operating_system
+    if request.vo:
+        params[APPLIANCE_TAGS_PREFIX + 'vo'] = request.vo
+    if request.expiration_date:
+        params[APPLIANCE_TAGS_PREFIX + 'expiration_date'] = str(request.expiration_date)
+    if request.image_list_identifier:
+        params[APPLIANCE_TAGS_PREFIX + 'image_list_identifier'] = request.image_list_identifier
+    if request.base_mpuri:
+        params[APPLIANCE_TAGS_PREFIX + 'base_mpuri'] = request.base_mpuri
+    if request.appid:
+        params[APPLIANCE_TAGS_PREFIX + 'appid'] = request.appid
+    if request.digest:
+        params[APPLIANCE_TAGS_PREFIX + 'digest'] = request.digest
+
+    return params
+
 class Handler:
     """
     Handler for communication with OpenStack
     """
     def __init__(self):
         self.client = glance.client()
-        self.APPLIANCE_TAGS_PREFIX = 'CLOUDKEEPER_'
-
-    def appliance_metadata_to_dict(self, request):
-        """
-        Parsing Appliance metadata to dictionary
-        """
-        
-        params = {}
-
-        if request.title:
-            params[self.APPLIANCE_TAGS_PREFIX + 'title'] = request.title
-            params['name'] = request.title
-        if request.description:
-            params[self.APPLIANCE_TAGS_PREFIX + 'description'] = request.description
-            params['description'] = request.description
-        if request.mpuri:
-            params[self.APPLIANCE_TAGS_PREFIX + 'mpuri'] = request.mpuri
-        if request.group:
-            params[self.APPLIANCE_TAGS_PREFIX + 'group'] = request.group
-        if request.ram:
-            params[self.APPLIANCE_TAGS_PREFIX + 'ram'] = str(request.ram)
-            params['min_ram'] = request.ram
-        if request.core:
-            params[self.APPLIANCE_TAGS_PREFIX + 'core'] = str(request.core)
-            params['min_disk'] = request.core
-        if request.version:
-            params[self.APPLIANCE_TAGS_PREFIX + 'version'] = request.version
-        if request.architecture:
-            params[self.APPLIANCE_TAGS_PREFIX + 'architecture'] = request.architecture
-        if request.operating_system:
-            params[self.APPLIANCE_TAGS_PREFIX + 'operating_system'] = request.operating_system
-        if request.vo:
-            params[self.APPLIANCE_TAGS_PREFIX + 'vo'] = request.vo
-        if request.expiration_date:
-            params[self.APPLIANCE_TAGS_PREFIX + 'expiration_date'] = str(request.expiration_date)
-        if request.image_list_identifier:
-            params[self.APPLIANCE_TAGS_PREFIX + 'image_list_identifier'] = request.image_list_identifier
-        if request.base_mpuri:
-            params[self.APPLIANCE_TAGS_PREFIX + 'base_mpuri'] = request.base_mpuri
-        if request.appid:
-            params[self.APPLIANCE_TAGS_PREFIX + 'appid'] = request.appid
-        if request.digest:
-            params[self.APPLIANCE_TAGS_PREFIX + 'digest'] = request.digest
-
-        return params
 
     def image_dict_to_appliance_message(self, request):
         appliance_dict = {}
-        
+
         for k, v in request.items():
-            if self.APPLIANCE_TAGS_PREFIX in k:
-                if k.replace(self.APPLIANCE_TAGS_PREFIX, '') == 'expiration_date':
-                    appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = int(v)
+            if APPLIANCE_TAGS_PREFIX in k:
+                if k.replace(APPLIANCE_TAGS_PREFIX, '') == 'expiration_date':
+                    appliance_dict[k.replace(APPLIANCE_TAGS_PREFIX, '')] = int(v)
                 else:
-                    appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = v
+                    appliance_dict[k.replace(APPLIANCE_TAGS_PREFIX, '')] = v
+            else:
+                print(str(k) + " - " + str(v))
 
         if 'id' in request:
             appliance_dict['identifier'] = request['id']
@@ -118,7 +121,7 @@ class Handler:
 
         self.register_image(request.image, appliance.id)
 
-        params = self.appliance_metadata_to_dict(request)
+        params = appliance_metadata_to_dict(request)
 
         self.update_tags(appliance.id, **params)
 
@@ -134,7 +137,7 @@ class Handler:
         image = self.client.images.update(image_id, container_format=container_format)
 
         if (request.mode == cloudkeeper_pb2.Image.LOCAL):
-            image = self.client.images.upload(image_id, open(request.location, 'rb'))
+            self.client.images.upload(image_id, open(request.location, 'rb'))
         elif (request.mode == cloudkeeper_pb2.Image.REMOTE):
             self.client.images.image_import(image_id, method='web-download', uri=request.uri)
 
