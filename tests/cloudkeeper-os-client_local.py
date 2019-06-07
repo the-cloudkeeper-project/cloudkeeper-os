@@ -14,13 +14,14 @@
 """The Python implementation of the GRPC helloworld.Greeter client."""
 
 from __future__ import print_function
-
 import logging
 
 import grpc
 
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2
 from cloudkeeper_os.grpc.cloudkeeper_grpc_python import cloudkeeper_pb2_grpc
+
+from oslo_config import cfg
 
 
 def run():
@@ -30,37 +31,55 @@ def run():
     with grpc.insecure_channel('127.0.0.1:50051') as channel:
         # channel = grpc.insecure_channel('localhost:50051')
         stub = cloudkeeper_pb2_grpc.CommunicatorStub(channel)
-        response = stub.AddAppliance(cloudkeeper_pb2.Appliance(
-            identifier='2a5451eb-91f3-46a2-95a7-9cff7362d553',
-            description='simulated image for testing',
-            mpuri='asd',
-            group='group1',
-            ram=2048,
-            core=4,
-            version='0.0.5867',
-            architecture='x86_64',
-            operating_system='OpenSuse',
-            vo='some.dummy.vo',
-            expiration_date=1556582400,
-            image_list_identifier='76fdee70-8119-5d33-aaaa-3c57e1c60df1',
-            base_mpuri='',
-            appid='993',
-            digest='digest',
-            image=cloudkeeper_pb2.Image(
-                mode=cloudkeeper_pb2.Image.LOCAL,
-                format=cloudkeeper_pb2.Image.QCOW2,
-                container_format=cloudkeeper_pb2.Image.BARE,
-                location='/tmp/cirros-0.4.0-x86_64-disk.img',
-                digest='SHA',
-                uri='https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
-                checksum='checksumvalue',
-                size=512,
-                username='demo',
-                password='openstack',)))
+        response = stub.AddAppliance(cloudkeeper_pb2.Appliance(identifier='2a5451eb-91f3-46a2-95a7-9cff7362d553',
+                                                                description='simulated image for testing',
+                                                                mpuri='asd',
+                                                                group='group1',
+                                                                ram=2048,
+                                                                core=4,
+                                                                version='0.0.5867',
+                                                                architecture='x86_64',
+                                                                operating_system='OpenSuse',
+                                                                vo='some.dummy.vo',
+                                                                expiration_date=1556582400,
+                                                                image_list_identifier='76fdee70-8119-5d33-aaaa-3c57e1c60df1',
+                                                                base_mpuri='',
+                                                                appid='993',
+                                                                digest='digest',
+                                                                image=cloudkeeper_pb2.Image(
+                                                                        mode=cloudkeeper_pb2.Image.LOCAL,
+                                                                        format=cloudkeeper_pb2.Image.QCOW2,
+                                                                        container_format=cloudkeeper_pb2.Image.AKI,
+                                                                        location='tests/demo_images/cirros-0.4.0-x86_64-disk.img',
+                                                                        digest='SHA',
+                                                                        uri='https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
+                                                                        checksum='checksumvalue',
+                                                                        size=512,
+                                                                        username='demo',
+                                                                        password='openstack',
+                                                                        )
+                                                                )
+                                        )
+
+        # response = stub.UpdateAppliance(cloudkeeper_pb2.Appliance(
+        #                                                         identifier='9092cfcd-cd53-44aa-9f3b-88a6367dcb59',
+        #                                                         image=cloudkeeper_pb2.Image(
+        #                                                                 mode=cloudkeeper_pb2.Image.LOCAL,
+        #                                                                 format=cloudkeeper_pb2.Image.QCOW2,
+        #                                                                 container_format=cloudkeeper_pb2.Image.BARE,
+        #                                                                 location='tests/demo_images/cirros-0.4.0-x86_64-disk.img',
+        #                                                                 digest='SHA',
+        #                                                                 uri='https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
+        #                                                                 checksum='checksumvalue',
+        #                                                                 size=512,
+        #                                                                 username='demo',
+        #                                                                 password='openstack',
+        #                                                                 )
+        #                                                         )
+        #                                 )
         # for i in stub.Appliances(cloudkeeper_pb2.ImageListIdentifier()):
         #         print(i)
         print("Greeter client received: " + str(response))
-
 
 if __name__ == '__main__':
     logging.basicConfig()
