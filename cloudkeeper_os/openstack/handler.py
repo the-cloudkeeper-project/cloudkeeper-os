@@ -19,7 +19,7 @@ class Handler:
         """
         Parsing Appliance metadata to dictionary
         """
-
+        
         params = {}
 
         if request.title:
@@ -60,18 +60,14 @@ class Handler:
         return params
 
     def image_dict_to_appliance_message(self, request):
-        # print([i.json_name for i in cloudkeeper_pb2.Appliance().DESCRIPTOR.fields])
-
         appliance_dict = {}
-
+        
         for k, v in request.items():
             if self.APPLIANCE_TAGS_PREFIX in k:
                 if k.replace(self.APPLIANCE_TAGS_PREFIX, '') == 'expiration_date':
                     appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = int(v)
                 else:
                     appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = v
-            else:
-                print(str(k) + " - " + str(v))
 
         if 'id' in request:
             appliance_dict['identifier'] = request['id']
@@ -93,9 +89,15 @@ class Handler:
         if 'checksum' in request:
             image_dict['checksum'] = request['checksum']
         if 'container_format' in request:
-            image_dict['container_format'] = cloudkeeper_pb2.Image.Format.Value(request['container_format'].upper())
+            try:
+                image_dict['container_format'] = cloudkeeper_pb2.Image.Format.Value(request['container_format'].upper())
+            except:
+                pass
         if 'disk_format' in request:
-            image_dict['format'] = cloudkeeper_pb2.Image.Format.Value(request['disk_format'].upper())
+            try:
+                image_dict['format'] = cloudkeeper_pb2.Image.Format.Value(request['disk_format'].upper())
+            except:
+                pass
 
         return([appliance_dict, image_dict])
 
@@ -111,7 +113,6 @@ class Handler:
         """
         Register appliance in OpenStack
         """
-
         name = request.operating_system + '-' + request.version + '-' + request.architecture
         appliance = self.client.images.create(name=name)
 
@@ -121,30 +122,34 @@ class Handler:
 
         self.update_tags(appliance.id, **params)
 
-        # print(self.client.)
-
     def register_image(self, request, image_id):
         """
         Upload image in Openstack
         """
 
         format = cloudkeeper_pb2.Image.Format.Name(request.format).lower()
-        self.client.images.update(image_id, disk_format=format)
+        image = self.client.images.update(image_id, disk_format=format)
 
         container_format = cloudkeeper_pb2.Image.Format.Name(request.container_format).lower()
-        self.client.images.update(image_id, container_format=container_format)
-
-        # mode = cloudkeeper_pb2.Image.Mode.Name(request.mode)
+        image = self.client.images.update(image_id, container_format=container_format)
 
         if (request.mode == cloudkeeper_pb2.Image.LOCAL):
-            print('using LOCAL')
-            self.client.images.upload(image_id, open(request.location, 'rb'))
-
+            image = self.client.images.upload(image_id, open(request.location, 'rb'))
         elif (request.mode == cloudkeeper_pb2.Image.REMOTE):
-            print('using REMOTE')
-            # image = self.client.images.upload(image_id, method='web-download', uri=request.uri)
-            # self.client.images.import_image(image, method='web-download', uri=request.uri)
             self.client.images.image_import(image_id, method='web-download', uri=request.uri)
+
+    def update_image(self, request, appliance_id):
+        """
+        Update image in Appliance
+        """
+
+        old_appliance = self.get_appliance(appliance_id)
+
+        new_appliance_list = self.image_dict_to_appliance_message(old_appliance)
+
+        self.remove_appliance(appliance_id)
+
+        self.register_appliance(cloudkeeper_pb2.Appliance(**new_appliance_list[0], image=request))
 
     def update_tags(self, appliance_id, **params):
         """
@@ -160,7 +165,6 @@ class Handler:
         """
 
         image = self.client.images.delete(appliance_id)
-        print(image)
 
     def list_images(self):
         """
@@ -168,7 +172,6 @@ class Handler:
         """
 
         image_list = self.client.images.list()
-        print(image_list)
         return image_list
 
     def remove_expired_appliances(self):
