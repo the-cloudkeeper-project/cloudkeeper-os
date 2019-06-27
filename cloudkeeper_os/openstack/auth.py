@@ -71,7 +71,7 @@ def _project_auth_options():
 def _common_auth_options():
     return {
         # Ex. {'auth_url': 'https://identity.localhost:5000/v3'}
-        "auth_url": f"{CONF.openstack.identity_endpoint}/{CONF.openstack.identity_api_version}",
+        "auth_url": f"{CONF.openstack.auth_url}",
     }
 
 

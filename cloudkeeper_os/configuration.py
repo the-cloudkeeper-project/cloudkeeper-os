@@ -153,15 +153,10 @@ OPENSTACK_OPTIONS = [
         required=True,
     ),
     cfg.StrOpt(
-        "identity-endpoint",
-        help="OpenStack Keystone endpoint",
-        default="https://identity.localhost:5000",
+        "auth-url",
+        help="OpenStack Keystone authentication URL",
+        default="https://identity.localhost:5000/v3",
         required=True,
-    ),
-    cfg.StrOpt(
-        "identity-api-version",
-        help="OpenStack Keystone API version",
-        default="v3",
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_AUTH_TYPE,
