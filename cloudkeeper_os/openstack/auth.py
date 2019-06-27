@@ -62,8 +62,9 @@ def _merge_options(func_name):
 
 def _project_auth_options():
     return {
+        "project_id": CONF.openstack.project_id,
         "project_name": CONF.openstack.project_name,
-        "project_domain_name": CONF.openstack.project_domain_name
+        "project_domain_name": CONF.openstack.project_domain_name,
     }
 
 

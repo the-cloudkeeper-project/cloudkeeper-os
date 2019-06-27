@@ -79,6 +79,7 @@ OPENSTACK_OPT_USERNAME = "username"
 OPENSTACK_OPT_PASSWORD = "password"
 OPENSTACK_OPT_USER_DOMAIN_NAME = "user-domain-name"
 OPENSTACK_OPT_PROJECT_NAME = "project-name"
+OPENSTACK_OPT_PROJECT_ID = "project-id"
 OPENSTACK_OPT_PROJECT_DOMAIN_NAME = "project-domain-name"
 OPENSTACK_OPT_OIDC_ACCESS_TOKEN = "oidc-access-token"
 OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER = "oidc-identity-provider"
@@ -96,8 +97,6 @@ OPENSTACK_AUTH_TYPES = {
             OPENSTACK_OPT_OIDC_ACCESS_TOKEN,
             OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER,
             OPENSTACK_OPT_OIDC_PROTOCOL,
-            OPENSTACK_OPT_PROJECT_NAME,
-            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
         ),
     },
     "v3oidcrefreshtoken": {
@@ -109,8 +108,6 @@ OPENSTACK_AUTH_TYPES = {
             OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER,
             OPENSTACK_OPT_OIDC_PROTOCOL,
             OPENSTACK_OPT_OIDC_DISCOVERY_ENDPOINT,
-            OPENSTACK_OPT_PROJECT_NAME,
-            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
         ),
     },
     "v3applicationcredential": {
@@ -128,8 +125,6 @@ OPENSTACK_AUTH_TYPES = {
             OPENSTACK_OPT_USERNAME,
             OPENSTACK_OPT_PASSWORD,
             OPENSTACK_OPT_USER_DOMAIN_NAME,
-            OPENSTACK_OPT_PROJECT_NAME,
-            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
         ),
     },
 }
@@ -167,7 +162,6 @@ OPENSTACK_OPTIONS = [
         "identity-api-version",
         help="OpenStack Keystone API version",
         default="v3",
-        required=True,
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_AUTH_TYPE,
@@ -194,17 +188,18 @@ OPENSTACK_OPTIONS = [
     cfg.StrOpt(
         OPENSTACK_OPT_USER_DOMAIN_NAME,
         help="OpenStack user domain",
-        default="default"
+    ),
+    cfg.StrOpt(
+        OPENSTACK_OPT_PROJECT_ID,
+        help="OpenStack project id",
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_PROJECT_NAME,
         help="OpenStack project name",
-        default="default"
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_PROJECT_DOMAIN_NAME,
         help="OpenStack project domain",
-        default="default"
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_OIDC_ACCESS_TOKEN,
