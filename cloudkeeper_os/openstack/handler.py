@@ -61,13 +61,15 @@ class Handler:
 
     def image_dict_to_appliance_message(self, request):
         appliance_dict = {}
+        appliance_fields = cloudkeeper_pb2.Appliance.DESCRIPTOR.fields_by_name.keys()
         
         for k, v in request.items():
             if self.APPLIANCE_TAGS_PREFIX in k:
-                if k.replace(self.APPLIANCE_TAGS_PREFIX, '') == 'expiration_date':
-                    appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = int(v)
-                else:
-                    appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = v
+                if k.replace(self.APPLIANCE_TAGS_PREFIX, '') in appliance_fields:
+                    if k.replace(self.APPLIANCE_TAGS_PREFIX, '') == 'expiration_date':
+                        appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = int(v)
+                    else:
+                        appliance_dict[k.replace(self.APPLIANCE_TAGS_PREFIX, '')] = v
 
         if 'id' in request:
             appliance_dict['identifier'] = request['id']

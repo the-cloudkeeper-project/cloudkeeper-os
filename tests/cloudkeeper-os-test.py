@@ -69,8 +69,8 @@ def get_appliance(stub, gen_name):
 
 Image_dict = {
                 'mode': cloudkeeper_pb2.Image.LOCAL,
-                'format': cloudkeeper_pb2.Image.QCOW2,
-                'container_format': cloudkeeper_pb2.Image.AKI,
+                'format': cloudkeeper_pb2.Image.RAW,
+                'container_format': cloudkeeper_pb2.Image.BARE,
                 'location': 'tests/demo_images/cirros-0.4.0-x86_64-disk.img',
                 'digest': 'SHA',
                 'uri': 'https://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
