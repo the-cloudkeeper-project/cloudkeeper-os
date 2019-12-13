@@ -66,7 +66,7 @@ class CoreConnector(cloudkeeper_pb2_grpc.CommunicatorServicer):
         for i in images:
             appliance_image_list = self.h.image_dict_to_appliance_message(i)
             appliance_dict = appliance_image_list[0]
-            appliance_dict['image'] = cloudkeeper_pb2.Image(**appliance_image_list[1])
+            appliance_dict["image"] = cloudkeeper_pb2.Image(**appliance_image_list[1])
 
             yield cloudkeeper_pb2.Appliance(**appliance_dict)
 

@@ -48,6 +48,7 @@ def _log_options(func):
         options = func()
         LOG.debug(f"Auth method options: {options}")
         return options
+
     return func_wrapper
 
 
@@ -56,14 +57,16 @@ def _merge_options(func_name):
     def merge_options_decorator(func):
         def func_wrapper():
             return {**func(), **func_name()}
+
         return func_wrapper
+
     return merge_options_decorator
 
 
 def _project_auth_options():
     return {
         "project_name": CONF.openstack.project_name,
-        "project_domain_name": CONF.openstack.project_domain_name
+        "project_domain_name": CONF.openstack.project_domain_name,
     }
 
 
@@ -95,7 +98,7 @@ def _v3oidcrefreshtoken_options():
         "protocol": CONF.openstack.oidc_protocol,
         "client_id": CONF.openstack.oidc_client_id,
         "client_secret": CONF.openstack.oidc_client_secret,
-        "discovery_endpoint": CONF.openstack.oidc_discovery_endpoint
+        "discovery_endpoint": CONF.openstack.oidc_discovery_endpoint,
     }
 
 

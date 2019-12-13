@@ -22,10 +22,7 @@ def serve():
     Configure and start gRPC server
     """
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    cloudkeeper_pb2_grpc.add_CommunicatorServicer_to_server(
-        CoreConnector(),
-        server
-    )
+    cloudkeeper_pb2_grpc.add_CommunicatorServicer_to_server(CoreConnector(), server)
     server.add_secure_port(CONF.connection.listen_address, _credentials())
     server.start()
     try:
@@ -39,13 +36,13 @@ def _credentials():
     if not CONF.connection.authentication:
         return grpc.ServerCredentials(None)
 
-    with open(CONF.connection.key, 'rb') as key_file:
+    with open(CONF.connection.key, "rb") as key_file:
         key = key_file.read()
 
-    with open(CONF.connection.certificate, 'rb') as cert_file:
+    with open(CONF.connection.certificate, "rb") as cert_file:
         certificate = cert_file.read()
 
-    with open(CONF.connection.core_certificate, 'rb') as core_cert_file:
+    with open(CONF.connection.core_certificate, "rb") as core_cert_file:
         core_certificate = core_cert_file.read()
 
     return grpc.ssl_server_credentials((key, certificate), core_certificate, True)

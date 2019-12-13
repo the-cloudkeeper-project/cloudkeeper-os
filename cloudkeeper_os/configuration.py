@@ -43,9 +43,7 @@ CONNECTION_OPTIONS = [
         default="/etc/grid-security/hostcert.pem",
     ),
     cfg.StrOpt(
-        "key",
-        help="Backend's host key",
-        default="/etc/grid-security/hostkey.pem"
+        "key", help="Backend's host key", default="/etc/grid-security/hostkey.pem"
     ),
     cfg.StrOpt(
         "core-certificate",
@@ -97,7 +95,7 @@ OPENSTACK_AUTH_TYPES = {
             OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER,
             OPENSTACK_OPT_OIDC_PROTOCOL,
             OPENSTACK_OPT_PROJECT_NAME,
-            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
+            OPENSTACK_OPT_PROJECT_DOMAIN_NAME,
         ),
     },
     "v3oidcrefreshtoken": {
@@ -110,7 +108,7 @@ OPENSTACK_AUTH_TYPES = {
             OPENSTACK_OPT_OIDC_PROTOCOL,
             OPENSTACK_OPT_OIDC_DISCOVERY_ENDPOINT,
             OPENSTACK_OPT_PROJECT_NAME,
-            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
+            OPENSTACK_OPT_PROJECT_DOMAIN_NAME,
         ),
     },
     "v3applicationcredential": {
@@ -119,7 +117,7 @@ OPENSTACK_AUTH_TYPES = {
             OPENSTACK_OPT_APPLICATION_CREDENTIAL_NAME,
             OPENSTACK_OPT_APPLICATION_CREDENTIAL_SECRET,
             OPENSTACK_OPT_USERNAME,
-            OPENSTACK_OPT_USER_DOMAIN_NAME
+            OPENSTACK_OPT_USER_DOMAIN_NAME,
         ),
     },
     "v3password": {
@@ -129,22 +127,21 @@ OPENSTACK_AUTH_TYPES = {
             OPENSTACK_OPT_PASSWORD,
             OPENSTACK_OPT_USER_DOMAIN_NAME,
             OPENSTACK_OPT_PROJECT_NAME,
-            OPENSTACK_OPT_PROJECT_DOMAIN_NAME
+            OPENSTACK_OPT_PROJECT_DOMAIN_NAME,
         ),
     },
 }
 OPENSTACK_GROUP = "openstack"
 OPENSTACK_OPTIONS = [
     cfg.StrOpt(
-        "region-name",
-        help="OpenStack region",
-        default="default",
-        required=True),
+        "region-name", help="OpenStack region", default="default", required=True
+    ),
     cfg.StrOpt(
         "glance-interface",
         help="OpenStack Glance interface",
         default="public",
-        required=True),
+        required=True,
+    ),
     cfg.StrOpt(
         "api-call-timeout",
         help="How long will Cloudkeeper-OS wait for OpenStack to finish operations",
@@ -181,45 +178,29 @@ OPENSTACK_OPTIONS = [
         default="v3oidcaccesstoken",
         required=True,
     ),
+    cfg.StrOpt(OPENSTACK_OPT_USERNAME, help="OpenStack username", secret=True),
+    cfg.StrOpt(OPENSTACK_OPT_PASSWORD, help="OpenStack password", secret=True),
     cfg.StrOpt(
-        OPENSTACK_OPT_USERNAME,
-        help="OpenStack username",
-        secret=True
+        OPENSTACK_OPT_USER_DOMAIN_NAME, help="OpenStack user domain", default="default"
     ),
     cfg.StrOpt(
-        OPENSTACK_OPT_PASSWORD,
-        help="OpenStack password",
-        secret=True
-    ),
-    cfg.StrOpt(
-        OPENSTACK_OPT_USER_DOMAIN_NAME,
-        help="OpenStack user domain",
-        default="default"
-    ),
-    cfg.StrOpt(
-        OPENSTACK_OPT_PROJECT_NAME,
-        help="OpenStack project name",
-        default="default"
+        OPENSTACK_OPT_PROJECT_NAME, help="OpenStack project name", default="default"
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_PROJECT_DOMAIN_NAME,
         help="OpenStack project domain",
-        default="default"
+        default="default",
     ),
     cfg.StrOpt(
-        OPENSTACK_OPT_OIDC_ACCESS_TOKEN,
-        help="OpenStack OIDC access token",
-        secret=True
+        OPENSTACK_OPT_OIDC_ACCESS_TOKEN, help="OpenStack OIDC access token", secret=True
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_OIDC_IDENTITY_PROVIDER,
         help="OpenStack OIDC identity provider",
-        secret=True
+        secret=True,
     ),
     cfg.StrOpt(
-        OPENSTACK_OPT_OIDC_PROTOCOL,
-        help="OpenStack OIDC protocol",
-        secret=True
+        OPENSTACK_OPT_OIDC_PROTOCOL, help="OpenStack OIDC protocol", secret=True
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_OIDC_REFRESH_TOKEN,
@@ -227,9 +208,7 @@ OPENSTACK_OPTIONS = [
         secret=True,
     ),
     cfg.StrOpt(
-        OPENSTACK_OPT_OIDC_CLIENT_ID,
-        help="OpenStack OIDC client ID",
-        secret=True
+        OPENSTACK_OPT_OIDC_CLIENT_ID, help="OpenStack OIDC client ID", secret=True
     ),
     cfg.StrOpt(
         OPENSTACK_OPT_OIDC_CLIENT_SECRET,
@@ -279,10 +258,11 @@ def configure():
 
     logging.register_options(conf)
 
-    conf(default_config_dirs=CONF_DIRS,
-         project=PROJECT_NAME,
-         version=pkg_resources.get_distribution(PROJECT_NAME).version
-         )
+    conf(
+        default_config_dirs=CONF_DIRS,
+        project=PROJECT_NAME,
+        version=pkg_resources.get_distribution(PROJECT_NAME).version,
+    )
 
     logging.setup(conf, PROJECT_NAME)
 
@@ -316,11 +296,7 @@ def _validate_configuration(conf):
 def _validate_auth_groups(conf):
     for auth_type, data in OPENSTACK_AUTH_TYPES.items():
         _validate_configuration_group(
-            conf,
-            OPENSTACK_OPT_AUTH_TYPE,
-            auth_type,
-            data["required"],
-            OPENSTACK_GROUP,
+            conf, OPENSTACK_OPT_AUTH_TYPE, auth_type, data["required"], OPENSTACK_GROUP,
         )
 
 
