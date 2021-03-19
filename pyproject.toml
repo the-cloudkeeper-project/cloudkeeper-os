@@ -2,7 +2,7 @@
 name = "cloudkeeper-os"
 version = "2.0.0"
 description = "OpenStack backend for Cloudkeeper"
-licence = "Apache-2.0"
+license = "Apache-2.0"
 authors = ["Jerome Pansanel <jerome.pansanel@iphc.cnrs.fr>", "Michal Kimle <kimle.michal@gmail.com>"]
 readme = "README.md"
 repository = "https://github.com/the-cloudkeeper-project/cloudkeeper-os"
